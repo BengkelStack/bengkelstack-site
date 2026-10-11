@@ -44,10 +44,6 @@
   </script>
 
   <style>
-    :root {
-      --border-subtle: rgba(255, 255, 255, 0.06);
-      --border-standard: rgba(255, 255, 255, 0.1);
-    }
     html, body {
       background-color: #08090a;
       color: #f7f8f8;
@@ -124,7 +120,7 @@
         <!-- Eyebrow Badge -->
         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[rgba(255,255,255,0.1)] bg-white/[0.02] text-slate-300 text-xs font-mono mb-8">
           <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-          <span>Zero-Dependency Python 3 • Local SQLite WAL • Air-Gapped Ready</span>
+          <span>Zero-Dependency Python 3 • Local SQLite WAL • Global Multi-Market Ready</span>
         </div>
 
         <!-- Headline -->
@@ -134,7 +130,7 @@
 
         <!-- Subtext -->
         <p class="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed font-normal">
-          A self-hosted point-of-sale and dynamic pricing engine engineered to eliminate shop billing leakage. Runs 100% offline with zero external pip dependencies.
+          A self-hosted point-of-sale and dynamic pricing engine engineered to eliminate workshop billing leakage. Operates 100% offline with zero external pip dependencies.
         </p>
 
         <!-- CTA Row -->
@@ -164,14 +160,26 @@
     <section id="interactive-pos" class="py-20 border-b border-[rgba(255,255,255,0.06)] bg-panel/40">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <div class="max-w-3xl mb-12">
-          <div class="text-xs font-mono text-sky-400 uppercase tracking-widest font-semibold mb-2">Live Demonstration</div>
-          <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">
-            See the Dual-Tier Pricing Engine in Action
-          </h2>
-          <p class="mt-3 text-sm sm:text-base text-slate-400 leading-relaxed">
-            Independent workshops lose margin when cashiers forget to add model-specific labor fees. Test the live simulator below: toggle between <b>Retail Takeaway</b> and <b>In-Shop Installation</b> to see vehicle labor fees calculate in real time.
-          </p>
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+          <div class="max-w-2xl">
+            <div class="text-xs font-mono text-sky-400 uppercase tracking-widest font-semibold mb-2">Live Interactive Simulator</div>
+            <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">
+              Test Dual-Tier Pricing on Any Market Fleet
+            </h2>
+            <p class="mt-3 text-sm sm:text-base text-slate-400 leading-relaxed">
+              Motorcycle models and labor rates differ across countries. Switch between <b>Global / Americas / EU</b> and <b>Southeast Asia (ASEAN)</b> below to test how vehicle displacement tiers automatically adjust labor pricing.
+            </p>
+          </div>
+
+          <!-- Region / Market Preset Switcher -->
+          <div class="flex items-center gap-2 p-1.5 rounded-xl bg-surface border border-[rgba(255,255,255,0.08)] self-start md:self-auto">
+            <button onclick="setMarketRegion('global')" id="btnRegionGlobal" class="px-3.5 py-2 rounded-lg text-xs font-mono font-medium transition-all bg-sky-500 text-slate-950 font-bold shadow-sm">
+              Global / Americas / EU ($ USD)
+            </button>
+            <button onclick="setMarketRegion('asean')" id="btnRegionAsean" class="px-3.5 py-2 rounded-lg text-xs font-mono font-medium transition-all text-slate-400 hover:text-white">
+              Southeast Asia / ASEAN (Rp IDR)
+            </button>
+          </div>
         </div>
 
         <!-- Interactive POS Terminal Wrapper -->
@@ -184,7 +192,7 @@
                 <div class="w-3 h-3 rounded-full bg-amber-500/60"></div>
                 <div class="w-3 h-3 rounded-full bg-emerald-500/60"></div>
               </div>
-              <span class="text-xs font-mono text-slate-300 font-medium">bengkelstack-pos:8089 (Local Engine Simulator)</span>
+              <span class="text-xs font-mono text-slate-300 font-medium" id="terminalTitle">bengkelstack-pos:8089 (Global Market Fleet)</span>
             </div>
             <div class="flex items-center gap-2 text-xs font-mono text-emerald-400">
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -201,25 +209,10 @@
               <!-- 1. Vehicle Selection -->
               <div>
                 <label class="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-2 font-medium">
-                  1. Select Customer Motorcycle
+                  1. Select Customer Vehicle Category
                 </label>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <button onclick="setDemoVehicle('beat')" id="btnVehBeat" class="p-2.5 rounded-lg border border-sky-500/40 bg-sky-500/10 text-white text-xs font-medium text-left transition-all">
-                    <div class="font-bold">Honda Beat</div>
-                    <div class="text-[10px] text-slate-400">110cc Matic (B 1234 XYZ)</div>
-                  </button>
-                  <button onclick="setDemoVehicle('vario')" id="btnVehVario" class="p-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-white/[0.02] hover:bg-white/[0.04] text-slate-300 text-xs font-medium text-left transition-all">
-                    <div class="font-bold">Honda Vario</div>
-                    <div class="text-[10px] text-slate-400">125cc (B 4567 ABC)</div>
-                  </button>
-                  <button onclick="setDemoVehicle('nmax')" id="btnVehNmax" class="p-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-white/[0.02] hover:bg-white/[0.04] text-slate-300 text-xs font-medium text-left transition-all">
-                    <div class="font-bold">Yamaha NMAX</div>
-                    <div class="text-[10px] text-slate-400">155cc Heavy (B 8901 DEF)</div>
-                  </button>
-                  <button onclick="setDemoVehicle('pcx')" id="btnVehPcx" class="p-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-white/[0.02] hover:bg-white/[0.04] text-slate-300 text-xs font-medium text-left transition-all">
-                    <div class="font-bold">Honda PCX</div>
-                    <div class="text-[10px] text-slate-400">160cc Complex (B 9999 VIP)</div>
-                  </button>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="vehButtonGrid">
+                  <!-- Dynamically populated by setMarketRegion -->
                 </div>
               </div>
 
@@ -228,19 +221,8 @@
                 <label class="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-2 font-medium">
                   2. Quick Add Catalog Items
                 </label>
-                <div class="flex flex-wrap gap-2 text-xs">
-                  <button onclick="addDemoItem('oil')" class="px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-hover border border-[rgba(255,255,255,0.08)] text-slate-200 transition-colors">
-                    + Engine Oil MPX2 ($4.50)
-                  </button>
-                  <button onclick="addDemoItem('pad')" class="px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-hover border border-[rgba(255,255,255,0.08)] text-slate-200 transition-colors">
-                    + Front Brake Pad ($6.00)
-                  </button>
-                  <button onclick="addDemoItem('belt')" class="px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-hover border border-[rgba(255,255,255,0.08)] text-slate-200 transition-colors">
-                    + CVT Drive Belt ($14.00)
-                  </button>
-                  <button onclick="addDemoItem('tuneup')" class="px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-hover border border-[rgba(255,255,255,0.08)] text-slate-200 transition-colors">
-                    + Full Routine Tune-Up ($5.00)
-                  </button>
+                <div class="flex flex-wrap gap-2 text-xs" id="quickAddButtonGrid">
+                  <!-- Dynamically populated by setMarketRegion -->
                 </div>
               </div>
 
@@ -259,7 +241,7 @@
               <div class="flex items-center justify-between p-4 rounded-xl bg-surface border border-[rgba(255,255,255,0.08)]">
                 <div>
                   <div class="text-[10px] font-mono uppercase text-slate-400">Deterministic Grand Total</div>
-                  <div class="text-2xl font-bold font-mono text-sky-400 mt-0.5" id="demoGrandTotal">$28.00</div>
+                  <div class="text-2xl font-bold font-mono text-sky-400 mt-0.5" id="demoGrandTotal">$0.00</div>
                 </div>
                 <div class="flex gap-2">
                   <button onclick="resetDemoCart()" class="px-3 py-2 text-xs rounded-lg border border-[rgba(255,255,255,0.1)] text-slate-400 hover:text-white transition-colors">
@@ -320,7 +302,7 @@ Loading receipt stream...
             </div>
             <h3 class="text-base font-semibold text-white">Dual-Tier Dynamic Pricing</h3>
             <p class="mt-2 text-xs text-slate-400 leading-relaxed">
-              Splits retail spare part prices from vehicle-specific installation fees. Dismantling a complex Maxi-scooter CVT automatically charges more labor than a basic moped.
+              Splits retail spare part prices from vehicle-specific installation fees. Dismantling a complex Maxi-scooter or Sportbike fairing automatically charges more labor than a basic scooter.
             </p>
           </div>
 
@@ -342,7 +324,7 @@ Loading receipt stream...
             </div>
             <h3 class="text-base font-semibold text-white">Deterministic Invoice OCR</h3>
             <p class="mt-2 text-xs text-slate-400 leading-relaxed">
-              Local supplier receipt parser for Astra Otoparts, Yamaha, and Denso. Reconciles <code class="text-sky-300">sum(subtotal) == grand_total</code> with zero AI hallucinations.
+              Local supplier receipt parser for OEM distributors. Reconciles <code class="text-sky-300">sum(subtotal) == grand_total</code> with zero AI hallucinations.
             </p>
           </div>
 
@@ -669,43 +651,116 @@ Loading receipt stream...
     </div>
   </footer>
 
-  <!-- INTERACTIVE POS DEMO JAVASCRIPT STATE ENGINE -->
+  <!-- MULTI-MARKET JAVASCRIPT STATE ENGINE -->
   <script>
-    // In-memory catalog database
-    const catalogDb = {
-      vehicles: {
-        beat: { name: "Honda Beat FI", brand: "Honda", plate: "B 1234 XYZ", owner: "Dimas Budi", class: "MATIC_110" },
-        vario: { name: "Honda Vario 125", brand: "Honda", plate: "B 4567 ABC", owner: "Siti Rahma", class: "MATIC_125" },
-        nmax: { name: "Yamaha NMAX 155", brand: "Yamaha", plate: "B 8901 DEF", owner: "Agus Pratama", class: "MATIC_155" },
-        pcx: { name: "Honda PCX 160", brand: "Honda", plate: "B 9999 VIP", owner: "Hendro Wijaya", class: "MATIC_160" },
+    const marketCatalogs = {
+      global: {
+        name: "Global / Americas / EU",
+        currency: "$",
+        vehicles: {
+          scooter: { name: "Honda PCX 150", type: "Compact Scooter", plate: "CA-8821-X", owner: "Alex Turner" },
+          sport: { name: "Kawasaki Ninja 400", type: "Sport / Street", plate: "TX-4920-K", owner: "Sarah Jenkins" },
+          naked: { name: "Yamaha MT-07", type: "Twin Middleweight", plate: "NY-7104-M", owner: "David Ross" },
+          cruiser: { name: "Honda Rebel 500", type: "Cruiser / Twin", plate: "FL-3391-R", owner: "Michael Vance" }
+        },
+        items: {
+          oil: { code: "OIL-SYN-10W40", name: "Full Synthetic 10W-40 (1L)", price: 14.50, installFees: { scooter: 5.00, sport: 8.00, naked: 8.00, cruiser: 10.00 } },
+          pad: { code: "BRK-SINT-F", name: "Sintered Front Brake Pads", price: 32.00, installFees: { scooter: 12.00, sport: 18.00, naked: 18.00, cruiser: 20.00 } },
+          chain: { code: "DRV-CHAIN-520", name: "520 O-Ring Chain & Sprockets", price: 85.00, installFees: { scooter: 25.00, sport: 45.00, naked: 40.00, cruiser: 50.00 } },
+          tuneup: { code: "SVC-MAINT", name: "Complete Safety Inspection", price: 0.00, installFees: { scooter: 35.00, sport: 60.00, naked: 50.00, cruiser: 65.00 } }
+        },
+        defaultCart: [
+          { id: 'oil', action: 'installed' },
+          { id: 'pad', action: 'installed' },
+          { id: 'chain', action: 'takeaway' }
+        ]
       },
-      items: {
-        oil: { code: "OIL-MPX2", name: "Engine Oil AHM MPX2 0.8L", price: 4.50, installFees: { beat: 1.00, vario: 1.00, nmax: 1.50, pcx: 1.50 } },
-        pad: { code: "BRK-PAD-F", name: "Front Disc Brake Pad OEM", price: 6.00, installFees: { beat: 2.00, vario: 2.50, nmax: 3.00, pcx: 3.50 } },
-        belt: { code: "DRV-BELT", name: "CVT Drive Belt OEM Replacement", price: 14.00, installFees: { beat: 3.00, vario: 4.00, nmax: 5.50, pcx: 6.00 } },
-        tuneup: { code: "SVC-TUNE", name: "Routine Tune-Up & Throttle Clean", price: 0.00, installFees: { beat: 5.00, vario: 6.00, nmax: 8.00, pcx: 9.00 } },
+      asean: {
+        name: "Southeast Asia (ASEAN)",
+        currency: "Rp",
+        vehicles: {
+          beat: { name: "Honda Beat FI", type: "Entry Scooter 110cc", plate: "B 1234 XYZ", owner: "Budi Santoso" },
+          vario: { name: "Honda Vario 125", type: "Mid Scooter 125cc", plate: "D 5678 AB", owner: "Rian Hidayat" },
+          nmax: { name: "Yamaha NMAX 155", type: "Maxi Scooter 155cc", plate: "B 8901 DEF", owner: "Ahmad Fauzi" },
+          pcx: { name: "Honda PCX 160", type: "Heavy Maxi 160cc", plate: "B 9999 VIP", owner: "Hendro Wijaya" }
+        },
+        items: {
+          oil: { code: "OIL-MPX2", name: "Engine Oil AHM MPX2 (0.8L)", price: 48000, installFees: { beat: 5000, vario: 5000, nmax: 10000, pcx: 10000 } },
+          pad: { code: "BRK-PAD-F", name: "Front Disc Brake Pad OEM", price: 55000, installFees: { beat: 10000, vario: 15000, nmax: 20000, pcx: 20000 } },
+          belt: { code: "DRV-BELT", name: "CVT Drive Belt OEM Spec", price: 135000, installFees: { beat: 25000, vario: 35000, nmax: 50000, pcx: 55000 } },
+          tuneup: { code: "SVC-TUNE", name: "Routine Tune-Up & Throttle Clean", price: 0, installFees: { beat: 45000, vario: 55000, nmax: 75000, pcx: 80000 } }
+        },
+        defaultCart: [
+          { id: 'oil', action: 'installed' },
+          { id: 'pad', action: 'installed' },
+          { id: 'belt', action: 'takeaway' }
+        ]
       }
     };
 
-    // Current State
-    let currentVehKey = 'beat';
-    let demoCart = [
-      { id: 'oil', action: 'installed' },
-      { id: 'pad', action: 'installed' },
-      { id: 'belt', action: 'takeaway' },
-    ];
+    let currentMarketKey = 'global';
+    let currentVehKey = 'scooter';
+    let demoCart = [];
+
+    function formatCurrency(val) {
+      const cur = marketCatalogs[currentMarketKey].currency;
+      if (cur === "$") {
+        return "$" + val.toFixed(2);
+      } else {
+        return "Rp " + Math.round(val).toLocaleString();
+      }
+    }
+
+    function setMarketRegion(marketKey) {
+      currentMarketKey = marketKey;
+      const mkt = marketCatalogs[marketKey];
+
+      // Update switcher buttons
+      document.getElementById('btnRegionGlobal').className = marketKey === 'global'
+        ? "px-3.5 py-2 rounded-lg text-xs font-mono font-medium transition-all bg-sky-500 text-slate-950 font-bold shadow-sm"
+        : "px-3.5 py-2 rounded-lg text-xs font-mono font-medium transition-all text-slate-400 hover:text-white";
+
+      document.getElementById('btnRegionAsean').className = marketKey === 'asean'
+        ? "px-3.5 py-2 rounded-lg text-xs font-mono font-medium transition-all bg-sky-500 text-slate-950 font-bold shadow-sm"
+        : "px-3.5 py-2 rounded-lg text-xs font-mono font-medium transition-all text-slate-400 hover:text-white";
+
+      document.getElementById('terminalTitle').textContent = `bengkelstack-pos:8089 (${mkt.name} Fleet)`;
+
+      // Set default vehicle for this market
+      currentVehKey = Object.keys(mkt.vehicles)[0];
+
+      // Populate vehicle buttons
+      const vehGrid = document.getElementById('vehButtonGrid');
+      vehGrid.innerHTML = Object.entries(mkt.vehicles).map(([k, v]) => `
+        <button onclick="setDemoVehicle('${k}')" id="btnVeh_${k}" class="p-2.5 rounded-lg border text-left transition-all ${k === currentVehKey ? 'border-sky-500/50 bg-sky-500/10 text-white' : 'border-[rgba(255,255,255,0.08)] bg-white/[0.02] hover:bg-white/[0.04] text-slate-300'}">
+          <div class="font-bold text-xs truncate">${v.name}</div>
+          <div class="text-[10px] text-slate-400 truncate mt-0.5">${v.type}</div>
+          <div class="text-[9px] font-mono text-sky-400/80 mt-1">${v.plate}</div>
+        </button>
+      `).join('');
+
+      // Populate quick-add item buttons
+      const itemGrid = document.getElementById('quickAddButtonGrid');
+      itemGrid.innerHTML = Object.entries(mkt.items).map(([k, v]) => `
+        <button onclick="addDemoItem('${k}')" class="px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-hover border border-[rgba(255,255,255,0.08)] text-slate-200 transition-colors">
+          + ${v.name} (${formatCurrency(v.price)})
+        </button>
+      `).join('');
+
+      // Reset cart to default
+      demoCart = JSON.parse(JSON.stringify(mkt.defaultCart));
+      renderDemoCart();
+    }
 
     function setDemoVehicle(key) {
       currentVehKey = key;
-      const keys = ['beat', 'vario', 'nmax', 'pcx'];
-      keys.forEach(k => {
-        const btn = document.getElementById('btnVeh' + k.charAt(0).toUpperCase() + k.slice(1));
+      const mkt = marketCatalogs[currentMarketKey];
+      Object.keys(mkt.vehicles).forEach(k => {
+        const btn = document.getElementById(`btnVeh_${k}`);
         if (btn) {
-          if (k === key) {
-            btn.className = "p-2.5 rounded-lg border border-sky-500/50 bg-sky-500/10 text-white text-xs font-medium text-left transition-all";
-          } else {
-            btn.className = "p-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-white/[0.02] hover:bg-white/[0.04] text-slate-300 text-xs font-medium text-left transition-all";
-          }
+          btn.className = k === key
+            ? "p-2.5 rounded-lg border border-sky-500/50 bg-sky-500/10 text-white text-left transition-all"
+            : "p-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-white/[0.02] hover:bg-white/[0.04] text-slate-300 text-left transition-all";
         }
       });
       renderDemoCart();
@@ -733,7 +788,8 @@ Loading receipt stream...
 
     function renderDemoCart() {
       const container = document.getElementById('demoCartList');
-      const veh = catalogDb.vehicles[currentVehKey];
+      const mkt = marketCatalogs[currentMarketKey];
+      const veh = mkt.vehicles[currentVehKey] || Object.values(mkt.vehicles)[0];
       let grandTotal = 0;
 
       document.getElementById('demoItemCount').textContent = `${demoCart.length} Items`;
@@ -744,13 +800,13 @@ Loading receipt stream...
             Cart is empty. Click "+ Quick Add Catalog Items" above to test pricing.
           </div>
         `;
-        document.getElementById('demoGrandTotal').textContent = "$0.00";
+        document.getElementById('demoGrandTotal').textContent = formatCurrency(0);
         renderThermalSlip([], 0);
         return;
       }
 
       const calculatedItems = demoCart.map((it, idx) => {
-        const itemData = catalogDb.items[it.id];
+        const itemData = mkt.items[it.id] || Object.values(mkt.items)[0];
         const isInstalled = it.action === 'installed';
         const laborFee = isInstalled ? (itemData.installFees[currentVehKey] || 0) : 0;
         const subtotal = itemData.price + laborFee;
@@ -776,8 +832,8 @@ Loading receipt stream...
             <div class="text-[10px] font-mono text-slate-500 flex items-center gap-2 mt-0.5">
               <span>${item.code}</span>
               <span>•</span>
-              <span>Part: $${item.price.toFixed(2)}</span>
-              ${item.isInstalled ? `<span class="text-sky-400 font-medium">• Labor (${veh.name}): +$${item.laborFee.toFixed(2)}</span>` : ''}
+              <span>Part: ${formatCurrency(item.price)}</span>
+              ${item.isInstalled ? `<span class="text-sky-400 font-medium">• Labor (${veh.name}): +${formatCurrency(item.laborFee)}</span>` : ''}
             </div>
           </div>
 
@@ -792,19 +848,20 @@ Loading receipt stream...
           </div>
 
           <!-- Subtotal & Remove -->
-          <div class="text-right font-mono font-bold text-slate-200 w-16">
-            $${item.subtotal.toFixed(2)}
+          <div class="text-right font-mono font-bold text-slate-200 w-24">
+            ${formatCurrency(item.subtotal)}
           </div>
           <button onclick="removeDemoItem(${item.idx})" class="text-slate-500 hover:text-rose-400 p-1 text-sm transition-colors" title="Remove Item">&times;</button>
         </div>
       `).join('');
 
-      document.getElementById('demoGrandTotal').textContent = `$${grandTotal.toFixed(2)}`;
+      document.getElementById('demoGrandTotal').textContent = formatCurrency(grandTotal);
       renderThermalSlip(calculatedItems, grandTotal);
     }
 
     function renderThermalSlip(items, total) {
-      const veh = catalogDb.vehicles[currentVehKey];
+      const mkt = marketCatalogs[currentMarketKey];
+      const veh = mkt.vehicles[currentVehKey] || Object.values(mkt.vehicles)[0];
       const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
       let lines = [];
@@ -812,11 +869,11 @@ Loading receipt stream...
       lines.push("        BENGKELSTACK WORKSHOP OS        ");
       lines.push("        SERVICE & REPAIR CENTER         ");
       lines.push("========================================");
-      lines.push(`Receipt No : WO-00042`);
-      lines.push(`Date/Time  : ${now}`);
-      lines.push(`Plate No   : ${veh.plate} (${veh.name})`);
-      lines.push(`Customer   : ${veh.owner}`);
-      lines.push(`METHOD     : CASH TENDER`);
+      lines.push("Receipt No : WO-00042");
+      lines.push("Date/Time  : " + now);
+      lines.push("Plate No   : " + veh.plate + " (" + veh.name + ")");
+      lines.push("Customer   : " + veh.owner);
+      lines.push("METHOD     : CASH TENDER");
       lines.push("----------------------------------------");
       lines.push("ITEM                 ACTION     SUBTOTAL");
       lines.push("----------------------------------------");
@@ -824,25 +881,24 @@ Loading receipt stream...
       items.forEach(it => {
         const shortName = (it.name.substring(0, 18) + "                  ").substring(0, 19);
         const act = it.isInstalled ? "INSTALL " : "RETAIL  ";
-        const sub = ("        $" + it.subtotal.toFixed(2)).slice(-9);
-        lines.push(`${shortName} ${act} ${sub}`);
+        const sub = ("               " + formatCurrency(it.subtotal)).slice(-10);
+        lines.push(shortName + " " + act + " " + sub);
         if (it.isInstalled && it.laborFee > 0) {
-          lines.push(`  Part: $${it.price.toFixed(2)} | Labor: $${it.laborFee.toFixed(2)}`);
+          lines.push("  Part: " + formatCurrency(it.price) + " | Labor: " + formatCurrency(it.laborFee));
         }
       });
 
       lines.push("----------------------------------------");
-      const totalStr = ("                 $" + total.toFixed(2)).slice(-17);
-      lines.push(`TOTAL AMOUNT:            ${totalStr}`);
-      lines.push(`CASH TENDERED:           ${totalStr}`);
-      lines.push(`CHANGE DUE:                         $0.00`);
+      const totalStr = ("                        " + formatCurrency(total)).slice(-18);
+      lines.push("TOTAL AMOUNT:     " + totalStr);
+      lines.push("CASH TENDERED:    " + totalStr);
+      lines.push("CHANGE DUE:                                0");
       lines.push("========================================");
       lines.push("       Thank you for your visit!        ");
       lines.push("    Service Warranty 7 Days / 500 KM    ");
       lines.push("========================================");
 
-      document.getElementById('demoThermalSlip').textContent = lines.join("
-");
+      document.getElementById('demoThermalSlip').textContent = lines.join("\n");
     }
 
     function simulateCheckout() {
@@ -856,7 +912,7 @@ Loading receipt stream...
     }
 
     // Initialize on page load
-    setDemoVehicle('beat');
+    setMarketRegion('global');
   </script>
 
 </body>
