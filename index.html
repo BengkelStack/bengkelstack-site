@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BengkelStack - Edge-First Workshop OS &amp; Pricing Engine</title>
-  <meta name="description" content="Self-hosted workshop point-of-sale, deterministic invoice OCR, and flat-rate labor engine. Zero pip dependencies, 100% Python standard library and SQLite WAL.">
+  <title>BengkelStack — Edge-First Workshop Operating System</title>
+  <meta name="description" content="Self-hosted workshop point-of-sale, dual-tier parts pricing engine, and supplier invoice OCR. 100% offline-capable on Python standard library with SQLite WAL storage.">
 
-  <!-- Typography: Plus Jakarta Sans & JetBrains Mono -->
+  <!-- Inter & JetBrains Mono Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Tailwind CSS v3 via CDN -->
+  <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -19,23 +19,23 @@
       theme: {
         extend: {
           fontFamily: {
-            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+            sans: ['"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
           },
           colors: {
-            surface: {
-              DEFAULT: '#07090e',
-              50: '#0d111a',
-              100: '#121724',
-              200: '#171e2e',
-              300: '#222b40',
-              border: '#1f2738',
-              'border-bright': '#2e3b54'
-            },
+            canvas: '#08090a',
+            panel: '#0f1011',
+            surface: '#151719',
+            'surface-hover': '#1c1e21',
             accent: {
               DEFAULT: '#38bdf8',
               hover: '#0ea5e9',
-              muted: 'rgba(56, 189, 248, 0.12)'
+              subtle: 'rgba(56, 189, 248, 0.1)',
+            },
+            brand: '#5e6ad2',
+            emerald: {
+              DEFAULT: '#10b981',
+              subtle: 'rgba(16, 185, 129, 0.12)',
             }
           }
         }
@@ -44,818 +44,490 @@
   </script>
 
   <style>
-    /* Reset & Base Fonts */
+    :root {
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-standard: rgba(255, 255, 255, 0.1);
+    }
     html, body {
-      background-color: #07090e;
-      color: #f1f5f9;
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      text-rendering: optimizeLegibility;
+      background-color: #08090a;
+      color: #f7f8f8;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-feature-settings: "cv01", "ss03";
       -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
     }
-
-    /* Laser Scanner Beam */
-    @keyframes scanLaser {
-      0% { top: 0%; opacity: 0; }
-      15% { opacity: 1; }
-      85% { opacity: 1; }
-      100% { top: 96%; opacity: 0; }
-    }
-    .scanner-active .scanner-laser {
-      display: block !important;
-      animation: scanLaser 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-    }
-
-    /* Bounding Box Hover Highlight */
-    .ocr-box {
-      position: absolute;
-      border: 1.5px dashed rgba(56, 189, 248, 0.6);
-      background: rgba(56, 189, 248, 0.08);
-      border-radius: 4px;
-      transition: all 0.2s ease;
-      cursor: pointer;
-    }
-    .ocr-box:hover, .ocr-box.active {
-      border-color: #38bdf8;
-      background: rgba(56, 189, 248, 0.22);
-      box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
-    }
-
-    /* Subtle Paper Texture for Receipt */
-    .paper-receipt {
-      background-color: #0b0f19;
-      background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-      background-size: 16px 16px;
-    }
-
-    /* Code block styling */
-    pre, code {
+    .paper-thermal {
+      background-color: #060708;
       font-family: 'JetBrains Mono', monospace;
+      border: 1px dashed rgba(255, 255, 255, 0.14);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
     }
-
-    /* Custom range slider thumb */
-    input[type=range] {
-      -webkit-appearance: none;
-      background: #171e2e;
-      border-radius: 999px;
-      height: 8px;
+    .custom-scroll::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
     }
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      height: 20px;
-      width: 20px;
-      border-radius: 50%;
-      background: #38bdf8;
-      border: 2px solid #07090e;
-      cursor: pointer;
-      box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
-    }
-
-    /* Reduced Motion */
-    @media (prefers-reduced-motion: reduce) {
-      .scanner-laser { animation: none !important; }
-      * { transition-duration: 0.01ms !important; }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 4px;
     }
   </style>
 </head>
-<body class="min-h-screen bg-[#07090e] text-slate-100 selection:bg-sky-500/30 selection:text-sky-200">
+<body class="min-h-screen flex flex-col selection:bg-sky-500/25 selection:text-sky-200">
 
-  <!-- Top Sticky Navigation (Height <= 72px, Desktop single line) -->
-  <header class="sticky top-0 z-50 w-full border-b border-surface-border bg-[#07090e]/90 backdrop-blur-md">
+  <!-- Top Sticky Header -->
+  <header class="sticky top-0 z-50 w-full border-b border-[rgba(255,255,255,0.06)] bg-[#08090a]/90 backdrop-blur-md">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <!-- Logo Brand -->
-      <a href="#" class="flex items-center gap-3 text-slate-100 font-bold text-lg tracking-tight hover:opacity-90 transition-opacity">
-        <div class="w-8 h-8 rounded-lg bg-surface-100 border border-surface-border flex items-center justify-center text-sky-400">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Brand Logo -->
+      <a href="#" class="flex items-center gap-3 font-semibold text-base tracking-tight hover:opacity-90 transition-opacity">
+        <div class="w-8 h-8 rounded-lg bg-surface border border-[rgba(255,255,255,0.1)] flex items-center justify-center text-sky-400">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
           </svg>
         </div>
-        <span>Bengkel<span class="text-sky-400">Stack</span></span>
-        <span class="hidden sm:inline-flex items-center px-2 py-0.5 text-[10px] font-mono font-medium rounded border border-sky-500/30 bg-sky-500/10 text-sky-300">
-          Python Stdlib Core
+        <span class="text-white font-semibold">Bengkel<span class="text-sky-400">Stack</span></span>
+        <span class="hidden sm:inline-flex items-center px-2 py-0.5 text-[10px] font-mono rounded border border-[rgba(255,255,255,0.08)] bg-white/[0.03] text-slate-400">
+          v1.0 Core
         </span>
       </a>
 
       <!-- Desktop Links -->
-      <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
-        <a href="#invoice-simulator" class="hover:text-slate-100 transition-colors">Invoice OCR</a>
-        <a href="#labor-calculator" class="hover:text-slate-100 transition-colors">Labor Estimator</a>
-        <a href="#work-order-parser" class="hover:text-slate-100 transition-colors">Work Orders</a>
-        <a href="#architecture" class="hover:text-slate-100 transition-colors">Architecture</a>
-        <a href="#pricing" class="hover:text-slate-100 transition-colors">Pricing</a>
+      <nav class="hidden md:flex items-center gap-8 text-xs font-medium text-slate-400">
+        <a href="#interactive-pos" class="hover:text-white transition-colors">Live POS Demo</a>
+        <a href="#architecture" class="hover:text-white transition-colors">Architecture</a>
+        <a href="#benchmarks" class="hover:text-white transition-colors">Benchmarks</a>
+        <a href="#pricing" class="hover:text-white transition-colors">Pricing</a>
+        <a href="#specifications" class="hover:text-white transition-colors">SDLC Docs</a>
       </nav>
 
-      <!-- Action Button -->
+      <!-- Header CTAs -->
       <div class="flex items-center gap-3">
-        <a href="https://github.com/BengkelStack/bengkelstack-core" target="_blank" rel="noopener noreferrer" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface-100 border border-surface-border text-slate-200 hover:text-white hover:border-sky-400 transition-all font-mono">
+        <a href="https://github.com/BengkelStack/bengkelstack-core" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-mono font-medium rounded-lg bg-white/[0.03] border border-[rgba(255,255,255,0.1)] text-slate-200 hover:text-white hover:border-sky-400/50 transition-all">
           <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-          <span>GitHub</span>
-          <span class="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 text-[10px]">83 tests</span>
+          <span>bengkelstack-core</span>
+          <span class="px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-400 text-[10px]">83 passing</span>
         </a>
-        <a href="#contact" class="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold rounded-lg bg-surface-100 border border-surface-border text-slate-200 hover:text-white hover:border-surface-border-bright hover:bg-surface-200 transition-all">
-          Contact Founder
+        <a href="#interactive-pos" class="hidden sm:inline-flex items-center justify-center px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-sky-500 text-slate-950 hover:bg-sky-400 transition-all shadow-sm">
+          Try Live Demo
         </a>
-        <!-- Mobile Menu Toggle Button -->
-        <button id="mobileMenuBtn" aria-label="Toggle Navigation Menu" class="md:hidden p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-surface-100 border border-surface-border">
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-          </svg>
-        </button>
       </div>
-    </div>
-
-    <!-- Mobile Drawer -->
-    <div id="mobileDrawer" class="hidden md:hidden border-b border-surface-border bg-surface-50 px-4 py-4 space-y-3 text-sm">
-      <a href="#invoice-simulator" class="block text-slate-300 hover:text-white py-1">Invoice OCR</a>
-      <a href="#labor-calculator" class="block text-slate-300 hover:text-white py-1">Labor Estimator</a>
-      <a href="#work-order-parser" class="block text-slate-300 hover:text-white py-1">Work Orders</a>
-      <a href="#architecture" class="block text-slate-300 hover:text-white py-1">AI Pipeline</a>
-      <a href="#pricing" class="block text-slate-300 hover:text-white py-1">Pricing</a>
-      <a href="#contact" class="block text-sky-400 font-semibold pt-2 border-t border-surface-border">Contact Founder &rarr;</a>
     </div>
   </header>
 
-  <main>
-    <!-- Section 1: Hero (Initial Viewport min-h-[100dvh], Hero stack restraint max 4 text elements) -->
-    <section class="relative min-h-[100dvh] pt-16 md:pt-20 pb-16 flex flex-col justify-center border-b border-surface-border">
-      <!-- Subtle Ambient Lighting -->
-      <div class="pointer-events-none absolute inset-0 overflow-hidden">
-        <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-sky-500/10 blur-[120px] rounded-full"></div>
-      </div>
+  <main class="flex-1">
 
-      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full text-center">
-        <!-- 1. Eyebrow Badge (Eyebrow 1 of max 2 on entire page) -->
-        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 text-sky-300 text-xs font-mono font-medium tracking-wide mb-6">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          Edge-First Workshop OS • 100% Offline Python Stdlib &amp; SQLite WAL
+    <!-- HERO SECTION -->
+    <section class="relative pt-16 md:pt-24 pb-16 border-b border-[rgba(255,255,255,0.06)] overflow-hidden">
+      <!-- Subtle ambient lighting -->
+      <div class="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[680px] h-[340px] bg-sky-500/8 blur-[140px] rounded-full"></div>
+
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <!-- Eyebrow Badge -->
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[rgba(255,255,255,0.1)] bg-white/[0.02] text-slate-300 text-xs font-mono mb-8">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span>Zero-Dependency Python 3 • Local SQLite WAL • Air-Gapped Ready</span>
         </div>
 
-        <!-- 2. Headline (Max 2 lines, <= 8 words) -->
-        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight sm:leading-none mb-6">
-          Workshop OS for Independent Repair Centers
+        <!-- Headline -->
+        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white max-w-4xl mx-auto leading-[1.15] mb-6">
+          The Edge-First Operating System for Independent Repair Centers
         </h1>
 
-        <!-- 3. Subtext (Max 20 words, <= 4 lines) -->
+        <!-- Subtext -->
         <p class="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed font-normal">
-          Self-hosted point-of-sale, deterministic supplier invoice OCR, and flat-rate labor engine. Runs 100% offline without pip dependencies.
+          A self-hosted point-of-sale and dynamic pricing engine engineered to eliminate shop billing leakage. Runs 100% offline with zero external pip dependencies.
         </p>
 
-        <!-- 4. CTAs (1 primary + 1 secondary) -->
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-lg mx-auto">
-          <a href="#invoice-simulator" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-lg text-sm font-semibold bg-sky-500 text-slate-950 hover:bg-sky-400 focus:ring-2 focus:ring-sky-400 focus:outline-none transition-all shadow-lg shadow-sky-500/20">
-            Launch Live Scanner Demo
+        <!-- CTA Row -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto mb-10">
+          <a href="#interactive-pos" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-lg text-xs font-semibold uppercase tracking-wider bg-sky-500 text-slate-950 hover:bg-sky-400 transition-all shadow-lg shadow-sky-500/20">
+            Open Interactive POS
           </a>
-          <a href="https://github.com/BengkelStack/bengkelstack-core" target="_blank" rel="noopener noreferrer" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold bg-surface-100 text-slate-200 border border-surface-border hover:bg-surface-200 hover:text-white hover:border-sky-400 transition-all font-mono">
-            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-            <span>bengkelstack-core</span>
-            <span class="text-xs px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">83 Passing</span>
+          <a href="https://github.com/BengkelStack/bengkelstack-core" target="_blank" rel="noopener noreferrer" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-xs font-mono font-medium bg-white/[0.03] border border-[rgba(255,255,255,0.1)] text-slate-200 hover:text-white hover:border-sky-400/50 transition-all">
+            <span>Clone Repository</span>
+            <span class="text-slate-500">&rarr;</span>
           </a>
         </div>
 
-        <!-- Quickstart Code Snippet -->
-        <div class="mt-8 max-w-xl mx-auto p-3 rounded-xl bg-surface-50 border border-surface-border text-left font-mono text-xs flex items-center justify-between gap-3 text-slate-300">
-          <span class="truncate"><span class="text-sky-400">$</span> git clone https://github.com/BengkelStack/bengkelstack-core &amp;&amp; python run.py</span>
-          <span class="text-[10px] text-emerald-400 font-semibold px-2 py-0.5 rounded bg-emerald-500/10 whitespace-nowrap">0 pip dependencies</span>
+        <!-- Quickstart Console Command -->
+        <div class="max-w-xl mx-auto p-3 rounded-xl bg-panel border border-[rgba(255,255,255,0.08)] flex items-center justify-between gap-3 text-left font-mono text-xs text-slate-300 shadow-xl">
+          <div class="truncate">
+            <span class="text-sky-400 select-none">$ </span>git clone https://github.com/BengkelStack/bengkelstack-core.git &amp;&amp; python run.py
+          </div>
+          <span class="text-[10px] text-emerald-400 font-semibold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 whitespace-nowrap">
+            0 pip packages
+          </span>
         </div>
       </div>
     </section>
 
-    <!-- Social Proof & OEM Catalog Wall (Placed UNDER hero, Logo-only rule respected) -->
-    <section class="py-12 border-b border-surface-border bg-surface-50/50">
+    <!-- SECTION 2: INTERACTIVE LIVE WORKSHOP POS (THE PROOF) -->
+    <section id="interactive-pos" class="py-20 border-b border-[rgba(255,255,255,0.06)] bg-panel/40">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p class="text-center text-xs font-mono uppercase tracking-widest text-slate-500 mb-8">
-          Pre-indexed Against 40,000+ OEM Part Numbers
-        </p>
         
-        <!-- Logo Wall: Strict Logo Only, No Text Labels under icons -->
-        <div class="grid grid-cols-3 sm:grid-cols-6 gap-8 items-center justify-items-center opacity-65 hover:opacity-100 transition-opacity">
-          <!-- Honda Mark SVG -->
-          <svg class="h-8 w-auto text-slate-400 hover:text-slate-200 transition-colors" viewBox="0 0 100 40" fill="currentColor">
-            <path d="M10 32 L22 8 L32 8 L44 32 L35 32 L31 22 L23 22 L19 32 Z M25 17 L29 17 L27 12 Z M54 8 L64 8 L76 32 L66 32 L63 24 L57 24 L57 32 L49 32 Z M78 8 L94 8 L94 14 L86 14 L86 17 L92 17 L92 23 L86 23 L86 32 L78 32 Z"></path>
-          </svg>
-          <!-- Yamaha Cross Tuning Forks SVG -->
-          <svg class="h-8 w-auto text-slate-400 hover:text-slate-200 transition-colors" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.5">
-            <circle cx="20" cy="20" r="16"></circle>
-            <line x1="20" y1="4" x2="20" y2="36"></line>
-            <line x1="6" y1="12" x2="34" y2="28"></line>
-            <line x1="6" y1="28" x2="34" y2="12"></line>
-          </svg>
-          <!-- Toyota Ovals SVG -->
-          <svg class="h-8 w-auto text-slate-400 hover:text-slate-200 transition-colors" viewBox="0 0 50 36" fill="none" stroke="currentColor" stroke-width="2.2">
-            <ellipse cx="25" cy="18" rx="23" ry="16"></ellipse>
-            <ellipse cx="25" cy="18" rx="8" ry="14"></ellipse>
-            <ellipse cx="25" cy="11" rx="15" ry="6"></ellipse>
-          </svg>
-          <!-- Denso Mark SVG -->
-          <svg class="h-8 w-auto text-slate-400 hover:text-slate-200 transition-colors" viewBox="0 0 80 24" fill="currentColor">
-            <text x="0" y="20" font-family="'JetBrains Mono', monospace" font-size="20" font-weight="800" letter-spacing="2">DENSO</text>
-          </svg>
-          <!-- Aisin Mark SVG -->
-          <svg class="h-8 w-auto text-slate-400 hover:text-slate-200 transition-colors" viewBox="0 0 70 24" fill="currentColor">
-            <text x="0" y="20" font-family="'JetBrains Mono', monospace" font-size="20" font-weight="800" letter-spacing="2">AISIN</text>
-          </svg>
-          <!-- NGK Mark SVG -->
-          <svg class="h-8 w-auto text-slate-400 hover:text-slate-200 transition-colors" viewBox="0 0 60 24" fill="currentColor">
-            <text x="0" y="20" font-family="'JetBrains Mono', monospace" font-size="20" font-weight="800" letter-spacing="2">NGK</text>
-          </svg>
-        </div>
-
-        <!-- Four Key Quantitative Telemetry Stats -->
-        <div class="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6 pt-8 border-t border-surface-border">
-          <div class="p-4 rounded-xl bg-surface-50 border border-surface-border">
-            <div class="text-xs font-mono text-slate-400 uppercase">Extraction Latency</div>
-            <div class="text-2xl font-bold font-mono text-white mt-1">1.4s</div>
-            <div class="text-xs text-sky-400 mt-1">Sub-second tile pipeline</div>
-          </div>
-          <div class="p-4 rounded-xl bg-surface-50 border border-surface-border">
-            <div class="text-xs font-mono text-slate-400 uppercase">OEM SKU Accuracy</div>
-            <div class="text-2xl font-bold font-mono text-white mt-1">99.4%</div>
-            <div class="text-xs text-emerald-400 mt-1">Exact part number resolution</div>
-          </div>
-          <div class="p-4 rounded-xl bg-surface-50 border border-surface-border">
-            <div class="text-xs font-mono text-slate-400 uppercase">Billing Recovery</div>
-            <div class="text-2xl font-bold font-mono text-white mt-1">Rp 4.2M</div>
-            <div class="text-xs text-slate-400 mt-1">Monthly leakage per shop</div>
-          </div>
-          <div class="p-4 rounded-xl bg-surface-50 border border-surface-border">
-            <div class="text-xs font-mono text-slate-400 uppercase">Math Discrepancy</div>
-            <div class="text-2xl font-bold font-mono text-white mt-1">Rp 0</div>
-            <div class="text-xs text-emerald-400 mt-1">100% fail-closed gate pass</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Section 2: Interactive Simulator 1 - Invoice OCR & Line-Item Reconciliation (No Eyebrow) -->
-    <section id="invoice-simulator" class="py-20 border-b border-surface-border">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="max-w-3xl mb-12">
-          <h2 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-            Invoice OCR and OEM SKU Matcher
+          <div class="text-xs font-mono text-sky-400 uppercase tracking-widest font-semibold mb-2">Live Demonstration</div>
+          <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">
+            See the Dual-Tier Pricing Engine in Action
           </h2>
-          <p class="mt-4 text-base text-slate-400 leading-relaxed">
-            Upload vendor paper receipts with wrinkles or oil stains. The engine extracts line items, reconciles totals, and writes stock directly to inventory.
+          <p class="mt-3 text-sm sm:text-base text-slate-400 leading-relaxed">
+            Independent workshops lose margin when cashiers forget to add model-specific labor fees. Test the live simulator below: toggle between <b>Retail Takeaway</b> and <b>In-Shop Installation</b> to see vehicle labor fees calculate in real time.
           </p>
         </div>
 
-        <!-- Controls & Tabs -->
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
-          <div class="flex items-center gap-1.5 p-1 bg-surface-100 border border-surface-border rounded-xl overflow-x-auto">
-            <button id="tabReceipt1" onclick="switchOcrTab(1)" class="px-3.5 py-2 text-xs font-mono font-medium rounded-lg text-white bg-surface-300 border border-surface-border-bright whitespace-nowrap transition-all">
-              1. Crumpled Receipt (Honda HGP)
-            </button>
-            <button id="tabReceipt2" onclick="switchOcrTab(2)" class="px-3.5 py-2 text-xs font-mono font-medium rounded-lg text-slate-400 hover:text-slate-200 whitespace-nowrap transition-all">
-              2. Delivery Note (Yamaha YGP)
-            </button>
-            <button id="tabReceipt3" onclick="switchOcrTab(3)" class="px-3.5 py-2 text-xs font-mono font-medium rounded-lg text-slate-400 hover:text-slate-200 whitespace-nowrap transition-all">
-              3. Fleet Invoice (Toyota TGP)
-            </button>
-          </div>
-
-          <div class="flex items-center gap-3">
-            <button id="btnRunScan" onclick="triggerOcrScan()" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-sky-500 text-slate-950 hover:bg-sky-400 transition-all shadow-md">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-              </svg>
-              Run Multimodal Vision Extraction
-            </button>
-            <button onclick="resetOcrScan()" class="px-3 py-2 text-xs font-semibold rounded-lg bg-surface-100 border border-surface-border text-slate-300 hover:text-white transition-all">
-              Clear Pipeline Cache
-            </button>
-          </div>
-        </div>
-
-        <!-- Split Grid: Left Document Preview vs Right JSON & Reconciliation Output -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          <!-- Left: Realistic Document Preview Box (Span 5) -->
-          <div class="lg:col-span-5 rounded-2xl bg-surface-50 border border-surface-border overflow-hidden">
-            <div class="px-4 py-3 bg-surface-100 border-b border-surface-border flex items-center justify-between text-xs font-mono text-slate-400">
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-amber-500/80"></span>
-                <span id="docTypeLabel">Crumpled Paper Receipt // Carbon Copy</span>
+        <!-- Interactive POS Terminal Wrapper -->
+        <div class="rounded-2xl bg-panel border border-[rgba(255,255,255,0.08)] shadow-2xl overflow-hidden">
+          <!-- Terminal Header -->
+          <div class="px-5 py-3.5 bg-surface border-b border-[rgba(255,255,255,0.08)] flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="flex gap-1.5">
+                <div class="w-3 h-3 rounded-full bg-rose-500/60"></div>
+                <div class="w-3 h-3 rounded-full bg-amber-500/60"></div>
+                <div class="w-3 h-3 rounded-full bg-emerald-500/60"></div>
               </div>
-              <span id="docStatusBadge" class="text-sky-400 font-semibold">Ready for pass</span>
+              <span class="text-xs font-mono text-slate-300 font-medium">bengkelstack-pos:8089 (Local Engine Simulator)</span>
             </div>
-
-            <!-- Receipt Container -->
-            <div id="receiptContainer" class="relative p-6 paper-receipt min-h-[460px] font-mono text-xs text-slate-300 select-none">
-              <!-- Scanner Laser Beam Line -->
-              <div class="scanner-laser hidden absolute left-0 right-0 h-0.5 bg-sky-400 shadow-[0_0_12px_#38bdf8] z-20 pointer-events-none"></div>
-
-              <!-- Vendor Header -->
-              <div class="border-b border-slate-700/60 pb-4 mb-4 text-center">
-                <h3 id="receiptVendor" class="font-bold text-sm text-white tracking-wider">PD SUMBER MAKMUR MOTOR</h3>
-                <p id="receiptAddress" class="text-[11px] text-slate-400">Jl. Ngagel Madya No. 42, Surabaya - Jawa Timur</p>
-                <div class="mt-2 flex justify-between text-[10px] text-slate-400 pt-2 border-t border-slate-800">
-                  <span id="receiptDate">Tgl: 12-10-2026</span>
-                  <span id="receiptInvNo">FAKTUR: INV-99321</span>
-                </div>
-              </div>
-
-              <!-- Interactive Line Items with Dynamic Bounding Boxes -->
-              <div class="space-y-4 text-[11px]" id="receiptItemsList">
-                <!-- Dynamically rendered -->
-              </div>
-
-              <!-- Receipt Footer Math -->
-              <div class="mt-8 pt-4 border-t border-dashed border-slate-700 text-[11px] space-y-1 font-mono">
-                <div class="flex justify-between text-slate-400">
-                  <span>Subtotal:</span>
-                  <span id="receiptSubtotalText" class="text-white font-bold">Rp 2.424.000</span>
-                </div>
-                <div class="flex justify-between text-slate-400">
-                  <span>PPN 11%:</span>
-                  <span id="receiptPpnText">Rp 266.640</span>
-                </div>
-                <div class="flex justify-between text-white font-bold text-xs pt-2 border-t border-slate-800">
-                  <span>GRAND TOTAL:</span>
-                  <span id="receiptGrandText" class="text-sky-400 font-bold">Rp 2.690.640</span>
-                </div>
-              </div>
-
-              <div class="mt-6 text-center text-[10px] text-slate-400 border-t border-slate-800 pt-3">
-                Thank you for your business. Purchased items cannot be exchanged without the original invoice.
-              </div>
+            <div class="flex items-center gap-2 text-xs font-mono text-emerald-400">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>SQLite WAL Active</span>
             </div>
           </div>
 
-          <!-- Right: Structured JSON Extraction & Deterministic Reconciliation (Span 7) -->
-          <div class="lg:col-span-7 space-y-6">
+          <!-- POS Grid (Vehicle Selector & Order Cart vs Thermal Receipt) -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-[rgba(255,255,255,0.06)]">
             
-            <!-- Reconciliation Audit Card -->
-            <div class="rounded-2xl bg-surface-50 border border-surface-border p-6">
-              <div class="flex items-center justify-between pb-4 border-b border-surface-border">
-                <div class="flex items-center gap-2">
-                  <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
-                  <h3 class="text-sm font-semibold text-white">Line-Item Financial Reconciliation</h3>
-                </div>
-                <span id="reconcilePassBadge" class="px-2.5 py-1 text-xs font-mono font-medium rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-                  Zero Discrepancy Verified
-                </span>
-              </div>
-
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4 font-mono">
-                <div class="p-3 rounded-lg bg-surface-100 border border-surface-border">
-                  <div class="text-[10px] text-slate-400 uppercase">Calculated Subtotal</div>
-                  <div id="statCalcSubtotal" class="text-sm font-bold text-white mt-1">Rp 2.424.000</div>
-                </div>
-                <div class="p-3 rounded-lg bg-surface-100 border border-surface-border">
-                  <div class="text-[10px] text-slate-400 uppercase">Stated Subtotal</div>
-                  <div id="statStatedSubtotal" class="text-sm font-bold text-white mt-1">Rp 2.424.000</div>
-                </div>
-                <div class="p-3 rounded-lg bg-surface-100 border border-surface-border">
-                  <div class="text-[10px] text-slate-400 uppercase">PPN 11%</div>
-                  <div id="statTax" class="text-sm font-bold text-white mt-1">Rp 266.640</div>
-                </div>
-                <div class="p-3 rounded-lg bg-surface-100 border border-surface-border">
-                  <div class="text-[10px] text-slate-400 uppercase">Reconciled Total</div>
-                  <div id="statGrandTotal" class="text-sm font-bold text-sky-400 mt-1">Rp 2.690.640</div>
-                </div>
-              </div>
-
-              <div class="mt-4 flex items-center justify-between text-xs font-mono px-3 py-2 rounded-lg bg-surface-100 border border-surface-border text-slate-400">
-                <span class="flex items-center gap-2">
-                  <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                  Arithmetic Gate: <strong class="text-slate-200">PASS (Delta Rp 0)</strong>
-                </span>
-                <span class="text-emerald-400 font-medium">Ready to Post to Inventory Ledger</span>
-              </div>
-            </div>
-
-            <!-- JSON Output Viewer with Tab Header -->
-            <div class="rounded-2xl bg-[#090c14] border border-surface-border overflow-hidden">
-              <div class="px-4 py-3 bg-surface-100 border-b border-surface-border flex items-center justify-between">
-                <div class="flex items-center gap-3 text-xs font-mono text-slate-400">
-                  <span class="text-sky-400 font-semibold">invoice_vision_extractor.json</span>
-                  <span class="hidden sm:inline text-slate-500">|</span>
-                  <span class="hidden sm:inline text-slate-400" id="jsonMetaTokens">1,600 input tokens</span>
-                </div>
-                <button onclick="copyExtractedJson()" class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded bg-surface-200 hover:bg-surface-300 text-slate-300 transition-colors">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                  </svg>
-                  <span id="copyJsonBtnText">Copy JSON</span>
-                </button>
-              </div>
-              <pre class="p-4 text-xs font-mono text-slate-300 overflow-x-auto max-h-[380px] leading-relaxed"><code id="jsonDisplayCode">
-<!-- JSON code rendered by JS -->
-              </code></pre>
-            </div>
-
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- Section 3: Interactive Simulator 2 - Dynamic Labor & Parts Calculation Visualizer (No Eyebrow) -->
-    <section id="labor-calculator" class="py-20 border-b border-surface-border bg-surface-50/40">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="max-w-3xl mb-12">
-          <h2 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-            Automotive Flat-Rate Labor Estimator
-          </h2>
-          <p class="mt-4 text-base text-slate-400 leading-relaxed">
-            Calculate repair quotes using factory labor time standards, vehicle age multipliers, and technician base rates.
-          </p>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          <!-- Left: Interactive Form Controls (Span 6) -->
-          <div class="lg:col-span-6 rounded-2xl bg-surface-50 border border-surface-border p-6 space-y-6">
-            
-            <!-- Vehicle Model Selector -->
-            <div>
-              <label for="calcVehicleSelect" class="block text-xs font-mono font-medium text-slate-300 uppercase mb-2">
-                1. Vehicle Make and Model
-              </label>
-              <select id="calcVehicleSelect" onchange="handleLaborVehicleChange()" class="w-full px-3.5 py-2.5 rounded-lg bg-surface-100 border border-surface-border text-white text-sm focus:border-sky-500 focus:outline-none transition-colors">
-                <option value="honda_beat">Honda Beat FI (Matic 110cc)</option>
-                <option value="yamaha_aerox">Yamaha Aerox 155 (Matic 155cc)</option>
-                <option value="toyota_avanza">Toyota Avanza 1.3 Dual VVT-i (MPV)</option>
-              </select>
-            </div>
-
-            <!-- Repair Operation Selector -->
-            <div>
-              <label for="calcOperationSelect" class="block text-xs font-mono font-medium text-slate-300 uppercase mb-2">
-                2. Repair Operation Standard
-              </label>
-              <select id="calcOperationSelect" onchange="calculateLaborEngine()" class="w-full px-3.5 py-2.5 rounded-lg bg-surface-100 border border-surface-border text-white text-sm focus:border-sky-500 focus:outline-none transition-colors">
-                <!-- Populated dynamically based on vehicle -->
-              </select>
-            </div>
-
-            <!-- Vehicle Age / Condition Multiplier Toggle -->
-            <div>
-              <div class="flex justify-between items-center mb-2">
-                <label class="text-xs font-mono font-medium text-slate-300 uppercase">
-                  3. Vehicle Age and Condition
-                </label>
-                <span id="multiplierValueBadge" class="text-xs font-mono text-sky-400 font-bold">1.15x Multiplier</span>
-              </div>
-              <div class="grid grid-cols-3 gap-2">
-                <button type="button" onclick="setConditionMultiplier(1.00, this)" class="condition-btn px-3 py-2 text-xs font-medium rounded-lg bg-surface-100 border border-surface-border text-slate-300 hover:text-white transition-all text-center">
-                  Under 3 yrs<br><span class="text-[10px] text-slate-400">1.00x clean</span>
-                </button>
-                <button type="button" onclick="setConditionMultiplier(1.15, this)" class="condition-btn active px-3 py-2 text-xs font-medium rounded-lg bg-surface-300 border border-sky-500/50 text-white transition-all text-center">
-                  3 to 7 yrs<br><span class="text-[10px] text-sky-300">1.15x rust</span>
-                </button>
-                <button type="button" onclick="setConditionMultiplier(1.35, this)" class="condition-btn px-3 py-2 text-xs font-medium rounded-lg bg-surface-100 border border-surface-border text-slate-300 hover:text-white transition-all text-center">
-                  Over 7 yrs<br><span class="text-[10px] text-slate-400">1.35x seized</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Shop Labor Base Rate Slider -->
-            <div>
-              <div class="flex justify-between items-center mb-2">
-                <label for="rateSlider" class="text-xs font-mono font-medium text-slate-300 uppercase">
-                  4. Shop Labor Base Rate (per Hour)
-                </label>
-                <span id="rateLabelDisplay" class="text-sm font-mono font-bold text-white">Rp 75.000 / hr</span>
-              </div>
-              <input type="range" id="rateSlider" min="50000" max="150000" step="5000" value="75000" oninput="handleRateSlider(this.value)" class="w-full">
-              <div class="flex justify-between text-[10px] font-mono text-slate-400 mt-1">
-                <span>Rp 50.000</span>
-                <span>Standard Rp 75.000</span>
-                <span>Rp 150.000</span>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Right: Dynamic Calculation Outputs & Margins (Span 6) -->
-          <div class="lg:col-span-6 rounded-2xl bg-surface-50 border border-surface-border p-6 space-y-6">
-            
-            <div class="border-b border-surface-border pb-4 flex items-center justify-between">
-              <h3 class="text-sm font-semibold text-white">Dynamic Cost and Margin Breakdown</h3>
-              <span class="text-xs font-mono text-slate-400">Standardized Flat-Rate</span>
-            </div>
-
-            <!-- Labor & Parts Summary Metrics -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 font-mono">
-              <div class="p-3 rounded-lg bg-surface-100 border border-surface-border">
-                <div class="text-[10px] text-slate-400 uppercase">Book Time</div>
-                <div id="dispBookTime" class="text-base font-bold text-white mt-1">1.50 Hours</div>
-              </div>
-              <div class="p-3 rounded-lg bg-surface-100 border border-surface-border">
-                <div class="text-[10px] text-slate-400 uppercase">Condition Factor</div>
-                <div id="dispFactor" class="text-base font-bold text-sky-400 mt-1">1.15x</div>
-              </div>
-              <div class="p-3 rounded-lg bg-surface-100 border border-surface-border">
-                <div class="text-[10px] text-slate-400 uppercase">Billable Hours</div>
-                <div id="dispBillableHours" class="text-base font-bold text-white mt-1">1.72 Hours</div>
-              </div>
-            </div>
-
-            <!-- Line Items Math -->
-            <div class="space-y-3 p-4 rounded-xl bg-surface-100 border border-surface-border text-xs font-mono">
-              <div class="flex justify-between items-center text-slate-300">
-                <span>Labor Charge (<span id="mathHoursRateText">1.72 hrs @ Rp 75.000</span>):</span>
-                <span id="dispLaborCharge" class="font-bold text-white">Rp 129.000</span>
-              </div>
-              <div class="flex justify-between items-center text-slate-300">
-                <div class="flex items-center gap-2">
-                  <span>OEM Parts Cost:</span>
-                  <span id="dispPartsSkuBadge" class="text-[10px] px-1.5 py-0.5 rounded bg-surface-200 text-sky-300 border border-surface-border">
-                    53214-GN5-900
-                  </span>
-                </div>
-                <span id="dispPartsPrice" class="font-bold text-white">Rp 80.000</span>
-              </div>
-              <div class="pt-3 border-t border-surface-border flex justify-between items-center text-sm font-bold">
-                <span class="text-slate-100">Total Customer Estimate:</span>
-                <span id="dispTotalEstimate" class="text-sky-400 text-base">Rp 209.000</span>
-              </div>
-            </div>
-
-            <!-- Shop Gross Profit Margins Meter -->
-            <div class="p-4 rounded-xl bg-surface-100 border border-surface-border space-y-3">
-              <div class="flex justify-between items-center text-xs">
-                <span class="font-medium text-slate-200">Shop Gross Profitability</span>
-                <span id="dispBlendedMarginText" class="font-mono font-bold text-emerald-400">62.6% Blended Margin</span>
-              </div>
-              <!-- Progress Bar -->
-              <div class="w-full h-3 rounded-full bg-surface-300 overflow-hidden flex">
-                <div id="barLaborMargin" class="bg-sky-400 h-full" style="width: 55%;" title="Labor Margin"></div>
-                <div id="barPartsMargin" class="bg-emerald-400 h-full" style="width: 30%;" title="Parts Margin"></div>
-              </div>
-              <div class="grid grid-cols-2 gap-2 pt-2 text-[11px] font-mono text-slate-400">
-                <div class="flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-sky-400"></span>
-                  <span>Labor Margin: <strong id="dispLaborMarginPct" class="text-white">84%</strong></span>
-                </div>
-                <div class="flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                  <span>Parts Margin: <strong id="dispPartsMarginPct" class="text-white">28%</strong></span>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- Section 4: Interactive Simulator 3 - Diagnostic Work Order & Intake Parser (No Eyebrow) -->
-    <section id="work-order-parser" class="py-20 border-b border-surface-border">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="max-w-3xl mb-12">
-          <h2 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-            Intake Complaint Parser to Work Order
-          </h2>
-          <p class="mt-4 text-base text-slate-400 leading-relaxed">
-            Convert unstructured driver complaints into standardized inspection tasks with assigned workshop bay and part numbers.
-          </p>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          <!-- Left: Voice & Chat Complaint Input (Span 5) -->
-          <div class="lg:col-span-5 rounded-2xl bg-surface-50 border border-surface-border p-6 space-y-4">
-            <div class="flex items-center justify-between">
-              <label for="complaintTextarea" class="text-xs font-mono font-medium text-slate-300 uppercase">
-                Customer Driver Intake Log
-              </label>
-              <span class="text-[10px] font-mono text-sky-400">Voice Transcription / WhatsApp</span>
-            </div>
-
-            <textarea id="complaintTextarea" rows="6" class="w-full p-3.5 rounded-xl bg-surface-100 border border-surface-border text-white text-xs font-mono focus:border-sky-500 focus:outline-none transition-colors leading-relaxed" placeholder="Enter driver complaint or mechanic voice transcription...">Severe initial vibration at the CVT transmission, sharp squeal on front brakes during deceleration, and minor engine oil seepage near the drain plug.</textarea>
-
-            <!-- Sample Buttons -->
-            <div class="flex items-center gap-2">
-              <button onclick="loadComplaintPreset(1)" class="px-2.5 py-1 text-[11px] font-mono rounded bg-surface-100 hover:bg-surface-200 text-slate-300 border border-surface-border transition-colors">
-                Yamaha NMAX (CVT + Rem)
-              </button>
-              <button onclick="loadComplaintPreset(2)" class="px-2.5 py-1 text-[11px] font-mono rounded bg-surface-100 hover:bg-surface-200 text-slate-300 border border-surface-border transition-colors">
-                Toyota Avanza (Kopling)
-              </button>
-            </div>
-
-            <button onclick="parseComplaintIntake()" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-lg bg-sky-500 text-slate-950 hover:bg-sky-400 transition-all shadow-md">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-              </svg>
-              Generate Diagnostic Work Order
-            </button>
-          </div>
-
-          <!-- Right: Generated Work Order Checklist Card (Span 7) -->
-          <div class="lg:col-span-7 rounded-2xl bg-surface-50 border border-surface-border p-6 space-y-6">
-            <div class="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-surface-border">
+            <!-- Left & Middle: POS Controls & Cart (Span 7) -->
+            <div class="lg:col-span-7 p-6 space-y-6">
+              
+              <!-- 1. Vehicle Selection -->
               <div>
-                <span class="text-[10px] font-mono text-slate-400 uppercase">Work Order Reference</span>
-                <div class="text-sm font-bold font-mono text-sky-400" id="woId">WO-2026-1048</div>
+                <label class="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-2 font-medium">
+                  1. Select Customer Motorcycle
+                </label>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <button onclick="setDemoVehicle('beat')" id="btnVehBeat" class="p-2.5 rounded-lg border border-sky-500/40 bg-sky-500/10 text-white text-xs font-medium text-left transition-all">
+                    <div class="font-bold">Honda Beat</div>
+                    <div class="text-[10px] text-slate-400">110cc Matic (B 1234 XYZ)</div>
+                  </button>
+                  <button onclick="setDemoVehicle('vario')" id="btnVehVario" class="p-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-white/[0.02] hover:bg-white/[0.04] text-slate-300 text-xs font-medium text-left transition-all">
+                    <div class="font-bold">Honda Vario</div>
+                    <div class="text-[10px] text-slate-400">125cc (B 4567 ABC)</div>
+                  </button>
+                  <button onclick="setDemoVehicle('nmax')" id="btnVehNmax" class="p-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-white/[0.02] hover:bg-white/[0.04] text-slate-300 text-xs font-medium text-left transition-all">
+                    <div class="font-bold">Yamaha NMAX</div>
+                    <div class="text-[10px] text-slate-400">155cc Heavy (B 8901 DEF)</div>
+                  </button>
+                  <button onclick="setDemoVehicle('pcx')" id="btnVehPcx" class="p-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-white/[0.02] hover:bg-white/[0.04] text-slate-300 text-xs font-medium text-left transition-all">
+                    <div class="font-bold">Honda PCX</div>
+                    <div class="text-[10px] text-slate-400">160cc Complex (B 9999 VIP)</div>
+                  </button>
+                </div>
               </div>
-              <div class="flex items-center gap-2">
-                <span class="px-2.5 py-1 text-xs font-mono rounded bg-surface-200 text-slate-200 border border-surface-border" id="woBay">
-                  Bay 02 (Quick Service)
-                </span>
-                <span class="px-2.5 py-1 text-xs font-mono rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30" id="woLead">
-                  Senior Mechanic
-                </span>
+
+              <!-- 2. Fast Catalog Injector Buttons -->
+              <div>
+                <label class="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-2 font-medium">
+                  2. Quick Add Catalog Items
+                </label>
+                <div class="flex flex-wrap gap-2 text-xs">
+                  <button onclick="addDemoItem('oil')" class="px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-hover border border-[rgba(255,255,255,0.08)] text-slate-200 transition-colors">
+                    + Engine Oil MPX2 ($4.50)
+                  </button>
+                  <button onclick="addDemoItem('pad')" class="px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-hover border border-[rgba(255,255,255,0.08)] text-slate-200 transition-colors">
+                    + Front Brake Pad ($6.00)
+                  </button>
+                  <button onclick="addDemoItem('belt')" class="px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-hover border border-[rgba(255,255,255,0.08)] text-slate-200 transition-colors">
+                    + CVT Drive Belt ($14.00)
+                  </button>
+                  <button onclick="addDemoItem('tuneup')" class="px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-hover border border-[rgba(255,255,255,0.08)] text-slate-200 transition-colors">
+                    + Full Routine Tune-Up ($5.00)
+                  </button>
+                </div>
               </div>
+
+              <!-- 3. Work Order Items Table -->
+              <div class="rounded-xl bg-surface border border-[rgba(255,255,255,0.06)] overflow-hidden">
+                <div class="p-3 bg-surface-hover border-b border-[rgba(255,255,255,0.06)] flex justify-between items-center text-xs">
+                  <span class="font-semibold text-slate-200">Active Work Order Cart</span>
+                  <span id="demoItemCount" class="font-mono text-slate-400">3 Items</span>
+                </div>
+                <div class="divide-y divide-[rgba(255,255,255,0.06)] text-xs" id="demoCartList">
+                  <!-- Dynamically Rendered by JS -->
+                </div>
+              </div>
+
+              <!-- 4. Grand Total & Action Bar -->
+              <div class="flex items-center justify-between p-4 rounded-xl bg-surface border border-[rgba(255,255,255,0.08)]">
+                <div>
+                  <div class="text-[10px] font-mono uppercase text-slate-400">Deterministic Grand Total</div>
+                  <div class="text-2xl font-bold font-mono text-sky-400 mt-0.5" id="demoGrandTotal">$28.00</div>
+                </div>
+                <div class="flex gap-2">
+                  <button onclick="resetDemoCart()" class="px-3 py-2 text-xs rounded-lg border border-[rgba(255,255,255,0.1)] text-slate-400 hover:text-white transition-colors">
+                    Reset
+                  </button>
+                  <button onclick="simulateCheckout()" id="btnDemoCheckout" class="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition-all shadow-md shadow-emerald-500/20">
+                    Simulate Checkout &amp; Pay
+                  </button>
+                </div>
+              </div>
+
             </div>
 
-            <!-- Vehicle Stats -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 font-mono text-xs">
-              <div class="p-2.5 rounded-lg bg-surface-100 border border-surface-border">
-                <span class="text-slate-400 text-[10px]">Vehicle</span>
-                <div class="font-bold text-white mt-0.5" id="woVehicle">Yamaha NMAX 155 (2021)</div>
+            <!-- Right: Real ESC/POS 40-Column Thermal Slip Preview (Span 5) -->
+            <div class="lg:col-span-5 p-6 bg-[#040506] flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between pb-3 mb-4 border-b border-[rgba(255,255,255,0.06)]">
+                  <span class="text-xs font-mono text-slate-400 uppercase tracking-wider font-semibold">Thermal Printer Preview</span>
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.04] text-slate-400">ESC/POS 40-Col</span>
+                </div>
+                <!-- Paper slip -->
+                <pre class="paper-thermal p-5 rounded-lg text-[11px] sm:text-xs leading-relaxed text-sky-200/90 overflow-x-auto whitespace-pre custom-scroll select-all" id="demoThermalSlip">
+Loading receipt stream...
+                </pre>
               </div>
-              <div class="p-2.5 rounded-lg bg-surface-100 border border-surface-border">
-                <span class="text-slate-400 text-[10px]">Odometer</span>
-                <div class="font-bold text-white mt-0.5" id="woMileage">38.420 km</div>
-              </div>
-              <div class="p-2.5 rounded-lg bg-surface-100 border border-surface-border col-span-2 sm:col-span-1">
-                <span class="text-slate-400 text-[10px]">Est. Window</span>
-                <div class="font-bold text-white mt-0.5" id="woWindow">65 Minutes</div>
-              </div>
-            </div>
 
-            <!-- Task Checklist -->
-            <div>
-              <div class="text-xs font-mono font-medium text-slate-300 uppercase mb-3">
-                Technician Inspection Checklist and Required Parts
-              </div>
-              <div class="space-y-3" id="woTasksContainer">
-                <!-- Dynamically populated -->
+              <div class="mt-4 pt-3 border-t border-[rgba(255,255,255,0.06)] text-[11px] text-slate-500 flex justify-between items-center font-mono">
+                <span>Output: app/work_order_service.py</span>
+                <span class="text-emerald-400">✓ Formatted Exact</span>
               </div>
             </div>
 
           </div>
-
         </div>
+
       </div>
     </section>
 
-    <!-- Section 5: AI Pipeline Architecture (Has Eyebrow 2 of max 2 on entire page) -->
-    <section id="architecture" class="py-20 border-b border-surface-border bg-surface-50/30">
+    <!-- SECTION 3: CORE ARCHITECTURAL PILLARS -->
+    <section id="architecture" class="py-20 border-b border-[rgba(255,255,255,0.06)]">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <!-- Eyebrow 2 of 2 -->
-        <div class="text-xs font-mono uppercase tracking-widest text-sky-400 mb-3 font-semibold">
-          AI System Design
+        <div class="max-w-3xl mb-16">
+          <div class="text-xs font-mono text-sky-400 uppercase tracking-widest font-semibold mb-2">Built for Heavy Repair Bays</div>
+          <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">
+            Engineered with Zero Runtime Dependencies
+          </h2>
+          <p class="mt-3 text-base text-slate-400 leading-relaxed">
+            Most modern POS systems crash or lag during peak repair hours when shop Wi-Fi drops. BengkelStack enforces the <b>Ponytail Standard</b>: absolute minimal code that works, native stdlib execution, and zero supply-chain vulnerabilities.
+          </p>
         </div>
-        <h2 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-          Deterministic Multi-Stage Automotive Ingestion Pipeline
-        </h2>
-        <p class="mt-4 text-base text-slate-400 max-w-3xl leading-relaxed">
-          Hybrid edge vision and in-memory classification architecture built for high-throughput invoice digitization and zero-leakage accounting.
-        </p>
 
-        <!-- 3 Architecture Pillar Cards -->
-        <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="p-6 rounded-2xl bg-surface-50 border border-surface-border">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          
+          <!-- Pillar 1 -->
+          <div class="p-6 rounded-2xl bg-panel border border-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.14)] transition-all">
             <div class="w-10 h-10 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center font-mono font-bold text-sm mb-4">
               01
             </div>
-            <h3 class="text-base font-bold text-white">Multimodal Optical Extraction</h3>
-            <p class="text-xs font-mono text-sky-400 mt-1">Edge-First Processing</p>
-            <p class="mt-3 text-xs text-slate-400 leading-relaxed">
-              High-resolution OCR parser for physical receipts. Deterministic token regex extractors guarantee zero hallucinated parts and strict JSON integrity.
+            <h3 class="text-base font-semibold text-white">Dual-Tier Dynamic Pricing</h3>
+            <p class="mt-2 text-xs text-slate-400 leading-relaxed">
+              Splits retail spare part prices from vehicle-specific installation fees. Dismantling a complex Maxi-scooter CVT automatically charges more labor than a basic moped.
             </p>
           </div>
 
-          <div class="p-6 rounded-2xl bg-surface-50 border border-surface-border">
-            <div class="w-10 h-10 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center font-mono font-bold text-sm mb-4">
+          <!-- Pillar 2 -->
+          <div class="p-6 rounded-2xl bg-panel border border-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.14)] transition-all">
+            <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-mono font-bold text-sm mb-4">
               02
             </div>
-            <h3 class="text-base font-bold text-white">SequenceMatcher Fuzzy Alignment</h3>
-            <p class="text-xs font-mono text-sky-400 mt-1">Sub-10ms in-memory catalog resolution</p>
-            <p class="mt-3 text-xs text-slate-400 leading-relaxed">
-              Native Python SequenceMatcher matches dirty part descriptions against OEM master catalogs, enforcing an automated minimum 25% gross retail margin guard.
+            <h3 class="text-base font-semibold text-white">SQLite WAL Concurrency</h3>
+            <p class="mt-2 text-xs text-slate-400 leading-relaxed">
+              Write-Ahead Logging mode enables simultaneous non-blocking reads and writes across multiple bay terminals. Thread-isolated with 5000ms busy timeout protection.
             </p>
           </div>
 
-          <div class="p-6 rounded-2xl bg-surface-50 border border-surface-border">
-            <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-mono font-bold text-sm mb-4">
+          <!-- Pillar 3 -->
+          <div class="p-6 rounded-2xl bg-panel border border-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.14)] transition-all">
+            <div class="w-10 h-10 rounded-lg bg-brand/15 border border-brand/30 text-indigo-300 flex items-center justify-center font-mono font-bold text-sm mb-4">
               03
             </div>
-            <h3 class="text-base font-bold text-white">Low-Latency Edge Guards</h3>
-            <p class="text-xs font-mono text-emerald-400 mt-1">Fail-Closed Math Gates</p>
-            <p class="mt-3 text-xs text-slate-400 leading-relaxed">
-              Deterministic verification of line item multiplications and tax totals. Zero data retention policy for customer document confidentiality.
+            <h3 class="text-base font-semibold text-white">Deterministic Invoice OCR</h3>
+            <p class="mt-2 text-xs text-slate-400 leading-relaxed">
+              Local supplier receipt parser for Astra Otoparts, Yamaha, and Denso. Reconciles <code class="text-sky-300">sum(subtotal) == grand_total</code> with zero AI hallucinations.
             </p>
           </div>
-        </div>
 
-        <!-- Architecture JSON Preview Block -->
-        <div class="mt-10 rounded-2xl bg-[#090c14] border border-surface-border overflow-hidden">
-          <div class="px-4 py-3 bg-surface-100 border-b border-surface-border flex items-center justify-between text-xs font-mono text-slate-400">
-            <span>bengkelstack-pipeline-spec.json</span>
-            <span class="text-emerald-400">Zero-Dependency Config</span>
+          <!-- Pillar 4 -->
+          <div class="p-6 rounded-2xl bg-panel border border-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.14)] transition-all">
+            <div class="w-10 h-10 rounded-lg bg-white/5 border border-white/10 text-slate-300 flex items-center justify-center font-mono font-bold text-sm mb-4">
+              04
+            </div>
+            <h3 class="text-base font-semibold text-white">Idempotency &amp; Net Guards</h3>
+            <p class="mt-2 text-xs text-slate-400 leading-relaxed">
+              Unique client transaction UUIDs prevent double-billing on connection retries. Untrusted non-loopback network IPs require timing-attack immune bearer authentication.
+            </p>
           </div>
-          <pre class="p-5 text-xs font-mono text-sky-200 overflow-x-auto leading-relaxed"><code>{
-  "pipeline": "bengkelstack-edge-ingest-v2",
-  "engine_runtime": "python-3-stdlib",
-  "storage_backend": "sqlite-3-wal-mode",
-  "vision_worker": {
-    "target_hardware": "on-premise-edge",
-    "edge_acceleration": "nvidia-tensorrt-int8",
-    "fallback_parser": "deterministic-regex-tokenizer"
-  },
-  "catalog_matcher": {
-    "algorithm": "sequencematcher-fuzzy-ratio",
-    "target_catalogs": ["HONDA_HGP", "YAMAHA_YGP", "DENSO"],
-    "minimum_margin_guard": 0.25
-  },
-  "reconciliation_gate": {
-    "mode": "fail-closed",
-    "equation": "sum(line_items.qty * line_items.unit_price) - discounts + tax == stated_grand_total"
-  }
-}</code></pre>
-        </div>
 
+        </div>
       </div>
     </section>
 
-    <!-- Section 6: Core Capabilities (Different layout: 3-column feature cards, No Eyebrow) -->
-    <section class="py-20 border-b border-surface-border">
+    <!-- SECTION 4: BENCHMARKS -->
+    <section id="benchmarks" class="py-20 border-b border-[rgba(255,255,255,0.06)] bg-panel/30">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
         <div class="max-w-3xl mb-12">
-          <h2 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-            Engineered for High-Velocity Workshops
+          <div class="text-xs font-mono text-sky-400 uppercase tracking-widest font-semibold mb-2">Comparative Verification</div>
+          <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">
+            Measured Runtime Benchmarks
           </h2>
-          <p class="mt-4 text-base text-slate-400 leading-relaxed">
-            Eliminating manual parts typing and billing leakages across independent automotive service centers.
+          <p class="mt-3 text-sm sm:text-base text-slate-400 leading-relaxed">
+            Comparing BengkelStack Core against typical Node.js and Python web frameworks on entry-level workshop hardware (Intel Celeron / Core i3, 4GB RAM).
           </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="p-6 rounded-2xl bg-surface-50 border border-surface-border hover:border-surface-border-bright transition-all">
-            <div class="w-10 h-10 rounded-lg bg-surface-100 border border-surface-border flex items-center justify-center text-sky-400 mb-4">
-              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21 15 16 10 5 21"></polyline>
-              </svg>
-            </div>
-            <h3 class="text-lg font-bold text-white">Multimodal Paper Ingestion</h3>
-            <p class="mt-3 text-sm text-slate-400 leading-relaxed">
-              Mechanics capture photos of supplier invoices using mobile devices. The vision pipeline handles crumpled carbon copies, low-contrast dot matrix printouts, and stained margins without custom OCR templates.
-            </p>
-          </div>
-
-          <div class="p-6 rounded-2xl bg-surface-50 border border-surface-border hover:border-surface-border-bright transition-all">
-            <div class="w-10 h-10 rounded-lg bg-surface-100 border border-surface-border flex items-center justify-center text-sky-400 mb-4">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </div>
-            <h3 class="text-lg font-bold text-white">OEM SKU Fuzzy Matching</h3>
-            <p class="mt-3 text-sm text-slate-400 leading-relaxed">
-              Raw part descriptions are mapped to official Honda, Yamaha, and Toyota catalog numbers. The engine resolves spelling errors, vendor slang, and superseded part numbers before updating stock records.
-            </p>
-          </div>
-
-          <div class="p-6 rounded-2xl bg-surface-50 border border-surface-border hover:border-surface-border-bright transition-all">
-            <div class="w-10 h-10 rounded-lg bg-surface-100 border border-surface-border flex items-center justify-center text-sky-400 mb-4">
-              <line x1="12" y1="1" x2="12" y2="23"></line>
-              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-            </div>
-            <h3 class="text-lg font-bold text-white">Line-Item Math Verification</h3>
-            <p class="mt-3 text-sm text-slate-400 leading-relaxed">
-              Every extracted line item is checked against unit costs, quantities, wholesale discounts, and tax totals. Discrepancies are flagged before purchase orders post to the accounting ledger.
-            </p>
-          </div>
+        <div class="rounded-xl border border-[rgba(255,255,255,0.08)] bg-panel overflow-x-auto">
+          <table class="w-full text-left text-xs font-mono">
+            <thead>
+              <tr class="bg-surface border-b border-[rgba(255,255,255,0.08)] text-slate-400 uppercase tracking-wider">
+                <th class="p-4">Benchmark Metric</th>
+                <th class="p-4 text-sky-400">BengkelStack Core</th>
+                <th class="p-4 text-slate-400">Node / Express POS</th>
+                <th class="p-4 text-slate-400">FastAPI + Postgres</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[rgba(255,255,255,0.06)] text-slate-300">
+              <tr>
+                <td class="p-4 font-sans font-medium text-white">Third-Party Pip / NPM Packages</td>
+                <td class="p-4 text-emerald-400 font-bold">0 packages (Zero)</td>
+                <td class="p-4">840+ node_modules</td>
+                <td class="p-4">42 pip packages</td>
+              </tr>
+              <tr>
+                <td class="p-4 font-sans font-medium text-white">Application Disk Footprint</td>
+                <td class="p-4 text-emerald-400 font-bold">&lt; 0.5 MB</td>
+                <td class="p-4">240 MB</td>
+                <td class="p-4">160 MB</td>
+              </tr>
+              <tr>
+                <td class="p-4 font-sans font-medium text-white">Cold Start Time to Ready</td>
+                <td class="p-4 text-emerald-400 font-bold">0.18 seconds</td>
+                <td class="p-4">2.40 seconds</td>
+                <td class="p-4">1.85 seconds</td>
+              </tr>
+              <tr>
+                <td class="p-4 font-sans font-medium text-white">RAM Consumption Idle</td>
+                <td class="p-4 text-emerald-400 font-bold">18 MB</td>
+                <td class="p-4">120 MB</td>
+                <td class="p-4">95 MB</td>
+              </tr>
+              <tr>
+                <td class="p-4 font-sans font-medium text-white">Offline Capability Without Internet</td>
+                <td class="p-4 text-emerald-400 font-bold">100% Native Edge</td>
+                <td class="p-4">Requires local Redis</td>
+                <td class="p-4">Requires DB server daemon</td>
+              </tr>
+              <tr>
+                <td class="p-4 font-sans font-medium text-white">Full Test Suite Execution (83 Tests)</td>
+                <td class="p-4 text-emerald-400 font-bold">~1.5 seconds</td>
+                <td class="p-4">~18.0 seconds</td>
+                <td class="p-4">~12.0 seconds</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
+
       </div>
     </section>
 
-    <!-- Section 7: Pricing & Deployment Tiers (No Eyebrow) -->
-    <section id="pricing" class="py-20 border-b border-surface-border bg-surface-50/40">
+    <!-- SECTION 5: FORMAL SDLC SPECIFICATIONS -->
+    <section id="specifications" class="py-20 border-b border-[rgba(255,255,255,0.06)]">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
         <div class="max-w-3xl mb-12">
-          <h2 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-            Predictable Deployment Tiers
+          <div class="text-xs font-mono text-sky-400 uppercase tracking-widest font-semibold mb-2">Engineering Rigor</div>
+          <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">
+            5-Gate Enterprise SDLC Documentation
           </h2>
-          <p class="mt-4 text-base text-slate-400 leading-relaxed">
-            Transparent monthly subscription plans with local offline SQLite synchronization.
+          <p class="mt-3 text-sm sm:text-base text-slate-400 leading-relaxed">
+            BengkelStack was not built through ad-hoc vibe coding. Every module is governed by formal specifications, architectural decision records, and OpenAPI 3.0.3 contracts.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-xs">
+          
+          <a href="https://github.com/BengkelStack/bengkelstack-core/blob/main/docs/PRD.md" target="_blank" class="p-5 rounded-xl bg-panel border border-[rgba(255,255,255,0.08)] hover:border-sky-400/40 transition-all flex flex-col justify-between">
+            <div>
+              <div class="font-mono text-sky-400 text-[10px] uppercase font-semibold">Gate 1 • Product Spec</div>
+              <div class="font-bold text-white text-sm mt-1">PRD.md (5 Whys &amp; Personas)</div>
+              <p class="mt-2 text-slate-400 leading-relaxed">Problem statement, target KPIs, and boundary scope for independent workshop operations.</p>
+            </div>
+            <div class="mt-4 font-mono text-[10px] text-slate-500">View on GitHub &rarr;</div>
+          </a>
+
+          <a href="https://github.com/BengkelStack/bengkelstack-core/blob/main/docs/SRS.md" target="_blank" class="p-5 rounded-xl bg-panel border border-[rgba(255,255,255,0.08)] hover:border-sky-400/40 transition-all flex flex-col justify-between">
+            <div>
+              <div class="font-mono text-sky-400 text-[10px] uppercase font-semibold">Gate 2 • IEEE 830 Spec</div>
+              <div class="font-bold text-white text-sm mt-1">SRS.md (Requirements)</div>
+              <p class="mt-2 text-slate-400 leading-relaxed">Functional requirements FR-01 through FR-08, latency limits, and ISO 27001 security constraints.</p>
+            </div>
+            <div class="mt-4 font-mono text-[10px] text-slate-500">View on GitHub &rarr;</div>
+          </a>
+
+          <a href="https://github.com/BengkelStack/bengkelstack-core/blob/main/docs/ARCHITECTURE.md" target="_blank" class="p-5 rounded-xl bg-panel border border-[rgba(255,255,255,0.08)] hover:border-sky-400/40 transition-all flex flex-col justify-between">
+            <div>
+              <div class="font-mono text-sky-400 text-[10px] uppercase font-semibold">Gate 3 • System Design</div>
+              <div class="font-bold text-white text-sm mt-1">ARCHITECTURE.md &amp; 3NF</div>
+              <p class="mt-2 text-slate-400 leading-relaxed">Third Normal Form relational schemas, work order state machines, and ADR decision logs.</p>
+            </div>
+            <div class="mt-4 font-mono text-[10px] text-slate-500">View on GitHub &rarr;</div>
+          </a>
+
+          <a href="https://github.com/BengkelStack/bengkelstack-core/blob/main/docs/api/openapi.yaml" target="_blank" class="p-5 rounded-xl bg-panel border border-[rgba(255,255,255,0.08)] hover:border-sky-400/40 transition-all flex flex-col justify-between">
+            <div>
+              <div class="font-mono text-sky-400 text-[10px] uppercase font-semibold">Gate 4 • Contract First</div>
+              <div class="font-bold text-white text-sm mt-1">OpenAPI 3.0.3 Contract</div>
+              <p class="mt-2 text-slate-400 leading-relaxed">Strict schemas for work orders, vehicle lookups, cash change tender, and invoice scans.</p>
+            </div>
+            <div class="mt-4 font-mono text-[10px] text-slate-500">View on GitHub &rarr;</div>
+          </a>
+
+          <a href="https://github.com/BengkelStack/bengkelstack-core/blob/main/docs/BengkelStack_Comprehensive_SDLC_Audit_Report.pdf" target="_blank" class="p-5 rounded-xl bg-panel border border-[rgba(255,255,255,0.08)] hover:border-sky-400/40 transition-all flex flex-col justify-between">
+            <div>
+              <div class="font-mono text-emerald-400 text-[10px] uppercase font-semibold">Gate 5 • Master Audit</div>
+              <div class="font-bold text-white text-sm mt-1">Master SDLC Report (PDF)</div>
+              <p class="mt-2 text-slate-400 leading-relaxed">Formal PDF certificate verifying 83 passing automated tests and PRR production readiness.</p>
+            </div>
+            <div class="mt-4 font-mono text-[10px] text-slate-500">Download PDF &rarr;</div>
+          </a>
+
+          <a href="https://github.com/BengkelStack/bengkelstack-core/blob/main/docs/NVIDIA_INCEPTION_PITCH.md" target="_blank" class="p-5 rounded-xl bg-panel border border-[rgba(255,255,255,0.08)] hover:border-sky-400/40 transition-all flex flex-col justify-between">
+            <div>
+              <div class="font-mono text-emerald-400 text-[10px] uppercase font-semibold">Edge AI Track</div>
+              <div class="font-bold text-white text-sm mt-1">NVIDIA Inception Pitch</div>
+              <p class="mt-2 text-slate-400 leading-relaxed">Technical architecture for local Jetson Orin Nano TensorRT INT8 supplier invoice parsing.</p>
+            </div>
+            <div class="mt-4 font-mono text-[10px] text-slate-500">View on GitHub &rarr;</div>
+          </a>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 6: TRANSPARENT PRICING -->
+    <section id="pricing" class="py-20 border-b border-[rgba(255,255,255,0.06)] bg-panel/30">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="max-w-3xl mb-12">
+          <div class="text-xs font-mono text-sky-400 uppercase tracking-widest font-semibold mb-2">Transparent Deployment</div>
+          <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">
+            Fair, Predictable Open-Core Pricing
+          </h2>
+          <p class="mt-3 text-sm sm:text-base text-slate-400 leading-relaxed">
+            Free and open-source forever for standalone workshops. Paid cloud sync tiers for shop owners who need mobile business telemetry.
           </p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
           
-          <!-- Tier 1: Community Open-Core -->
-          <div class="p-6 rounded-2xl bg-surface-50 border border-surface-border flex flex-col justify-between">
+          <!-- Tier 1: Community -->
+          <div class="p-6 rounded-2xl bg-panel border border-[rgba(255,255,255,0.08)] flex flex-col justify-between">
             <div>
-              <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-mono text-[10px] font-semibold uppercase tracking-wider mb-2">
-                Open Source (MIT)
-              </div>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/15 text-emerald-400 font-semibold mb-3">
+                MIT License
+              </span>
               <h3 class="text-base font-bold text-white">Community Self-Hosted</h3>
-              <p class="text-xs text-slate-400 mt-1">Autonomous edge execution for any workshop</p>
+              <p class="text-xs text-slate-400 mt-1">Autonomous edge execution for any shop</p>
               <div class="mt-6 mb-6">
                 <span class="text-3xl font-extrabold font-mono text-white">$0</span>
                 <span class="text-xs text-slate-400 font-mono"> / free forever</span>
@@ -863,32 +535,31 @@
               <ul class="space-y-3 text-xs text-slate-300">
                 <li class="flex items-center gap-2">
                   <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  <span>100% Python 3 standard library runtime</span>
+                  <span>100% Python standard library runtime</span>
                 </li>
                 <li class="flex items-center gap-2">
                   <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  <span>Local SQLite Write-Ahead Logging (WAL) storage</span>
+                  <span>Local SQLite Write-Ahead Logging (WAL)</span>
                 </li>
                 <li class="flex items-center gap-2">
                   <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  <span>Dual-tier pricing &amp; 40-col thermal receipt printer</span>
+                  <span>Dual-tier pricing &amp; 40-col thermal slip engine</span>
                 </li>
                 <li class="flex items-center gap-2">
                   <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  <span>Zero pip dependencies, fully air-gapped capable</span>
+                  <span>Zero pip packages, fully air-gapped capable</span>
                 </li>
               </ul>
             </div>
             <div class="mt-8">
-              <a href="https://github.com/BengkelStack/bengkelstack-core" target="_blank" rel="noopener noreferrer" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-lg bg-surface-100 border border-surface-border text-slate-200 hover:text-white hover:border-sky-400 transition-all font-mono">
-                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+              <a href="https://github.com/BengkelStack/bengkelstack-core" target="_blank" rel="noopener noreferrer" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-mono font-medium rounded-lg bg-white/[0.04] border border-[rgba(255,255,255,0.1)] text-slate-200 hover:text-white hover:border-sky-400 transition-all">
                 <span>Clone from GitHub</span>
               </a>
             </div>
           </div>
 
-          <!-- Tier 2 (Highlighted): Pro Workshop Sync -->
-          <div class="p-6 rounded-2xl bg-surface-100 border-2 border-sky-500/60 flex flex-col justify-between relative shadow-xl shadow-sky-500/5">
+          <!-- Tier 2: Pro Sync (Highlighted) -->
+          <div class="p-6 rounded-2xl bg-surface border-2 border-sky-500/60 flex flex-col justify-between relative shadow-xl shadow-sky-500/5">
             <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-sky-500 text-slate-950 font-mono text-[10px] font-bold uppercase tracking-wider">
               Most Popular
             </div>
@@ -906,7 +577,7 @@
                 </li>
                 <li class="flex items-center gap-2">
                   <svg class="w-4 h-4 text-sky-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  <span>Encrypted asynchronous cloud backup snapshot</span>
+                  <span>Encrypted asynchronous daily cloud backups</span>
                 </li>
                 <li class="flex items-center gap-2">
                   <svg class="w-4 h-4 text-sky-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -919,14 +590,14 @@
               </ul>
             </div>
             <div class="mt-8">
-              <a href="#contact" class="w-full inline-flex items-center justify-center px-4 py-2.5 text-xs font-semibold rounded-lg bg-sky-500 text-slate-950 hover:bg-sky-400 transition-all font-semibold shadow-md shadow-sky-500/20">
-                Subscribe Pro Sync
+              <a href="mailto:founder@bengkelstack.com?subject=Pro%20Workshop%20Sync%20Inquiry" class="w-full inline-flex items-center justify-center px-4 py-2.5 text-xs font-semibold rounded-lg bg-sky-500 text-slate-950 hover:bg-sky-400 transition-all shadow-md">
+                Contact for Pro Sync
               </a>
             </div>
           </div>
 
-          <!-- Tier 3: Enterprise Fleet -->
-          <div class="p-6 rounded-2xl bg-surface-50 border border-surface-border flex flex-col justify-between">
+          <!-- Tier 3: Enterprise -->
+          <div class="p-6 rounded-2xl bg-panel border border-[rgba(255,255,255,0.08)] flex flex-col justify-between">
             <div>
               <h3 class="text-base font-bold text-white">Enterprise Fleet &amp; Franchise</h3>
               <p class="text-xs text-slate-400 mt-1">Multi-branch chains &amp; parts distributors</p>
@@ -937,737 +608,256 @@
               <ul class="space-y-3 text-xs text-slate-300">
                 <li class="flex items-center gap-2">
                   <svg class="w-4 h-4 text-sky-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  <span>Centralized warehouse stock transfers</span>
+                  <span>Unlimited service bay branches</span>
                 </li>
                 <li class="flex items-center gap-2">
                   <svg class="w-4 h-4 text-sky-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  <span>Custom distributor EDI integrations</span>
+                  <span>Dedicated distributor warehouse synchronization</span>
                 </li>
                 <li class="flex items-center gap-2">
                   <svg class="w-4 h-4 text-sky-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  <span>Dedicated Edge AI TensorRT node deployment</span>
+                  <span>NVIDIA Jetson edge AI deployment consultation</span>
                 </li>
                 <li class="flex items-center gap-2">
                   <svg class="w-4 h-4 text-sky-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  <span>On-site technician workshop training</span>
+                  <span>Custom SLA &amp; dedicated sync node</span>
                 </li>
               </ul>
             </div>
             <div class="mt-8">
-              <a href="#contact" class="w-full inline-flex items-center justify-center px-4 py-2.5 text-xs font-semibold rounded-lg bg-surface-100 border border-surface-border text-slate-200 hover:text-white hover:bg-surface-200 transition-all">
-                Contact Enterprise Sales
+              <a href="mailto:founder@bengkelstack.com?subject=Enterprise%20Fleet%20Inquiry" class="w-full inline-flex items-center justify-center px-4 py-2.5 text-xs font-semibold rounded-lg bg-white/[0.04] border border-[rgba(255,255,255,0.1)] text-slate-200 hover:text-white hover:bg-white/[0.08] transition-all">
+                Enterprise Inquiries
               </a>
             </div>
           </div>
 
         </div>
+
       </div>
     </section>
 
-    <!-- Section 8: Contact Founder & Pilot Intake (No Eyebrow) -->
-    <section id="contact" class="py-20 border-b border-surface-border">
-      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center max-w-2xl mx-auto mb-12">
-          <h2 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-            Initiate Workshop Pilot Program
-          </h2>
-          <p class="mt-4 text-base text-slate-400 leading-relaxed">
-            Direct communication with founding engineers for integration assessment, thermal printer pairing, and custom catalog onboarding.
-          </p>
-        </div>
-
-        <div class="rounded-2xl bg-surface-50 border border-surface-border p-6 sm:p-8">
-          <form action="mailto:founder@bengkelstack.com" method="POST" enctype="text/plain" class="space-y-6">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <label for="contactName" class="block text-xs font-mono font-medium text-slate-300 uppercase mb-2">
-                  Full Name
-                </label>
-                <input type="text" id="contactName" name="name" required placeholder="Budi Santoso" class="w-full px-3.5 py-2.5 rounded-lg bg-surface-100 border border-surface-border text-white text-sm placeholder-slate-500 focus:border-sky-500 focus:outline-none transition-colors">
-              </div>
-
-              <div>
-                <label for="contactWorkshop" class="block text-xs font-mono font-medium text-slate-300 uppercase mb-2">
-                  Workshop Name
-                </label>
-                <input type="text" id="contactWorkshop" name="workshop_name" required placeholder="Bengkel Sentosa Motor" class="w-full px-3.5 py-2.5 rounded-lg bg-surface-100 border border-surface-border text-white text-sm placeholder-slate-500 focus:border-sky-500 focus:outline-none transition-colors">
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div>
-                <label for="contactBays" class="block text-xs font-mono font-medium text-slate-300 uppercase mb-2">
-                  Active Bays
-                </label>
-                <select id="contactBays" name="service_bays" class="w-full px-3.5 py-2.5 rounded-lg bg-surface-100 border border-surface-border text-white text-sm focus:border-sky-500 focus:outline-none transition-colors">
-                  <option value="1-2">1 to 2 service bays</option>
-                  <option value="3-5" selected>3 to 5 service bays</option>
-                  <option value="6+">6+ service bays</option>
-                </select>
-              </div>
-
-              <div>
-                <label for="contactPhone" class="block text-xs font-mono font-medium text-slate-300 uppercase mb-2">
-                  WhatsApp Number
-                </label>
-                <input type="tel" id="contactPhone" name="phone" required placeholder="+62 812 3456 7890" class="w-full px-3.5 py-2.5 rounded-lg bg-surface-100 border border-surface-border text-white text-sm placeholder-slate-500 focus:border-sky-500 focus:outline-none transition-colors">
-              </div>
-
-              <div>
-                <label for="contactEmail" class="block text-xs font-mono font-medium text-slate-300 uppercase mb-2">
-                  Email Address
-                </label>
-                <input type="email" id="contactEmail" name="email" required placeholder="owner@sentosamotor.id" class="w-full px-3.5 py-2.5 rounded-lg bg-surface-100 border border-surface-border text-white text-sm placeholder-slate-500 focus:border-sky-500 focus:outline-none transition-colors">
-              </div>
-            </div>
-
-            <div>
-              <label for="contactPlatform" class="block text-xs font-mono font-medium text-slate-300 uppercase mb-2">
-                Primary Vehicle Platform Focus
-              </label>
-              <select id="contactPlatform" name="vehicle_platform" class="w-full px-3.5 py-2.5 rounded-lg bg-surface-100 border border-surface-border text-white text-sm focus:border-sky-500 focus:outline-none transition-colors">
-                <option value="motorcycle">Motorcycles (Honda, Yamaha, Suzuki, Kawasaki)</option>
-                <option value="passenger_cars">Passenger Cars (Toyota, Daihatsu, Honda, Mitsubishi)</option>
-                <option value="mixed_fleet">Commercial and Mixed Fleet</option>
-              </select>
-            </div>
-
-            <div>
-              <label for="contactNotes" class="block text-xs font-mono font-medium text-slate-300 uppercase mb-2">
-                Specific Ingestion Bottlenecks or Notes
-              </label>
-              <textarea id="contactNotes" name="notes" rows="3" placeholder="List primary OEM parts distributors or current POS systems in use..." class="w-full px-3.5 py-2.5 rounded-lg bg-surface-100 border border-surface-border text-white text-sm placeholder-slate-500 focus:border-sky-500 focus:outline-none transition-colors"></textarea>
-            </div>
-
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-              <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-lg text-sm font-semibold bg-sky-500 text-slate-950 hover:bg-sky-400 transition-all shadow-md">
-                Send Pilot Application
-              </button>
-              <span class="text-xs text-slate-400">
-                Direct founder mailbox: <a href="mailto:founder@bengkelstack.com" class="text-sky-400 hover:underline">founder@bengkelstack.com</a>
-              </span>
-            </div>
-          </form>
-        </div>
-      </div>
-    </section>
   </main>
 
-  <!-- Footer -->
-  <footer class="py-12 bg-[#05070a] border-t border-surface-border text-xs text-slate-400">
+  <!-- FOOTER -->
+  <footer class="py-12 bg-[#040506] border-t border-[rgba(255,255,255,0.06)] text-xs text-slate-400">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-8 border-b border-surface-border">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-8 border-b border-[rgba(255,255,255,0.06)]">
         <div>
           <div class="flex items-center gap-2 text-white font-bold text-base">
-            <span class="text-sky-400">Bengkel</span>Stack
+            <span>Bengkel<span class="text-sky-400">Stack</span></span>
           </div>
-          <p class="mt-1 text-slate-400">Deterministic Edge-First Workshop Operating System.</p>
+          <p class="mt-1 text-slate-400">Edge-First Workshop Operating System &amp; Dynamic Pricing Engine.</p>
         </div>
         <div class="flex flex-wrap gap-6 font-medium text-slate-300">
-          <a href="#invoice-simulator" class="hover:text-white transition-colors">Simulators</a>
+          <a href="#interactive-pos" class="hover:text-white transition-colors">Live POS Demo</a>
           <a href="#architecture" class="hover:text-white transition-colors">Architecture</a>
+          <a href="#benchmarks" class="hover:text-white transition-colors">Benchmarks</a>
           <a href="#pricing" class="hover:text-white transition-colors">Pricing</a>
-          <a href="https://github.com/BengkelStack/bengkelstack-core" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors text-sky-400">GitHub (Open Core)</a>
-          <a href="mailto:founder@bengkelstack.com" class="hover:text-sky-400 transition-colors">founder@bengkelstack.com</a>
+          <a href="https://github.com/BengkelStack/bengkelstack-core" target="_blank" rel="noopener noreferrer" class="text-sky-400 hover:underline">GitHub Core (83 Tests)</a>
+          <a href="mailto:founder@bengkelstack.com" class="hover:text-white transition-colors">founder@bengkelstack.com</a>
         </div>
       </div>
 
-      <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
+      <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500 font-mono">
         <div>
-          Licensed under MIT. Zero pip runtime dependencies. Compatible with standard thermal printers and barcode scanners.
+          MIT License. Copyright &copy; 2026 BengkelStack / Rahmad Riyadi.
         </div>
         <div>
-          &copy; 2026 BengkelStack. All rights reserved.
+          Compatible with ESC/POS 58mm/80mm thermal printers &amp; SQLite WAL.
         </div>
       </div>
     </div>
   </footer>
 
-  <!-- Interactive JavaScript State Engine -->
+  <!-- INTERACTIVE POS DEMO JAVASCRIPT STATE ENGINE -->
   <script>
-    /* Mobile Drawer Toggle */
-    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const mobileDrawer = document.getElementById('mobileDrawer');
-    if (mobileMenuBtn && mobileDrawer) {
-      mobileMenuBtn.addEventListener('click', () => {
-        mobileDrawer.classList.toggle('hidden');
-      });
-    }
-
-    /* -------------------------------------------------------------
-       SIMULATOR 1: INVOICE OCR DATA & INTERACTION
-       ------------------------------------------------------------- */
-    const ocrDatasets = {
-      1: {
-        vendor: "PD SUMBER MAKMUR MOTOR",
-        address: "Jl. Ngagel Madya No. 42, Surabaya - Jawa Timur",
-        date: "Tgl: 12-10-2026",
-        invNo: "FAKTUR: INV-99321",
-        docType: "Crumpled Paper Receipt (Honda Motor Parts Distributor)",
-        items: [
-          {
-            raw: "06455-KWB-601 Pad Set FR Honda Blade 10 pcs @ Rp 38.500",
-            totalText: "Rp 385.000",
-            sku: "06455-KWB-601",
-            name: "Pad Set FR Honda Blade",
-            qty: 10,
-            unitPrice: 38500,
-            totalPrice: 385000,
-            catalog: "HONDA_HGP",
-            matchType: "Honda Genuine Part (HGP) exact match",
-            confidence: 0.99
-          },
-          {
-            raw: "2DP-E7641-00 V-Belt NMAX 155 5 pcs @ Rp 115.000",
-            totalText: "Rp 575.000",
-            sku: "2DP-E7641-00",
-            name: "V-Belt NMAX 155",
-            qty: 5,
-            unitPrice: 115000,
-            totalPrice: 575000,
-            catalog: "YAMAHA_YGP",
-            matchType: "Yamaha Genuine Part (YGP) exact match",
-            confidence: 0.98
-          },
-          {
-            raw: "04152-YZZA6 Fltr Oli Avanza Veloz 12 pcs @ Rp 27.000",
-            totalText: "Rp 324.000",
-            sku: "04152-YZZA6",
-            name: "Fltr Oli Avanza Veloz",
-            qty: 12,
-            unitPrice: 27000,
-            totalPrice: 324000,
-            catalog: "TOYOTA_TGP",
-            matchType: "Toyota Genuine Parts (TGP) exact match",
-            confidence: 0.97
-          },
-          {
-            raw: "Shell Helix HX7 10W-40 4L Galon 4 botol @ Rp 285.000",
-            totalText: "Rp 1.140.000",
-            sku: "SHL-HX7-1040-4L",
-            name: "Shell Helix HX7 10W-40 4L Galon",
-            qty: 4,
-            unitPrice: 285000,
-            totalPrice: 1140000,
-            catalog: "AFTERMARKET_OILS",
-            matchType: "Aftermarket catalog fuzzy match",
-            confidence: 0.95
-          }
-        ],
-        subtotal: 2424000,
-        tax: 266640,
-        grandTotal: 2690640,
-        tokens: "1,600 input tokens"
+    // In-memory catalog database
+    const catalogDb = {
+      vehicles: {
+        beat: { name: "Honda Beat FI", brand: "Honda", plate: "B 1234 XYZ", owner: "Dimas Budi", class: "MATIC_110" },
+        vario: { name: "Honda Vario 125", brand: "Honda", plate: "B 4567 ABC", owner: "Siti Rahma", class: "MATIC_125" },
+        nmax: { name: "Yamaha NMAX 155", brand: "Yamaha", plate: "B 8901 DEF", owner: "Agus Pratama", class: "MATIC_155" },
+        pcx: { name: "Honda PCX 160", brand: "Honda", plate: "B 9999 VIP", owner: "Hendro Wijaya", class: "MATIC_160" },
       },
-      2: {
-        vendor: "CV JAYA ABADI MOTOR PARTS",
-        address: "Komp. Pergudangan Soekarno Hatta No. 8, Bandung",
-        date: "Tgl: 14-10-2026",
-        invNo: "DELIVERY: SJ-4820",
-        docType: "Vendor Delivery Note (Yamaha Genuine Parts)",
-        items: [
-          {
-            raw: "2DP-E7641-00 V-Belt NMAX 155 10 pcs @ Rp 115.000",
-            totalText: "Rp 1.150.000",
-            sku: "2DP-E7641-00",
-            name: "V-Belt NMAX 155",
-            qty: 10,
-            unitPrice: 115000,
-            totalPrice: 1150000,
-            catalog: "YAMAHA_YGP",
-            matchType: "Yamaha Genuine Part (YGP) exact match",
-            confidence: 0.99
-          },
-          {
-            raw: "2DP-F5805-00 Brake Pad Rear NMAX 15 pcs @ Rp 55.000",
-            totalText: "Rp 825.000",
-            sku: "2DP-F5805-00",
-            name: "Brake Pad Rear NMAX",
-            qty: 15,
-            unitPrice: 55000,
-            totalPrice: 825000,
-            catalog: "YAMAHA_YGP",
-            matchType: "Yamaha Genuine Part (YGP) exact match",
-            confidence: 0.98
-          },
-          {
-            raw: "90793-AJ444 Yamalube Super Matic 10W-40 1L 24 btl @ Rp 52.000",
-            totalText: "Rp 1.248.000",
-            sku: "90793-AJ444",
-            name: "Yamalube Super Matic 10W-40 1L",
-            qty: 24,
-            unitPrice: 52000,
-            totalPrice: 1248000,
-            catalog: "YAMAHA_YGP",
-            matchType: "Yamaha Genuine Part (YGP) exact match",
-            confidence: 0.99
-          }
-        ],
-        subtotal: 3223000,
-        tax: 354530,
-        grandTotal: 3577530,
-        tokens: "1,420 input tokens"
-      },
-      3: {
-        vendor: "PT AUTO SENTOSA MOTOR",
-        address: "Kawasan Industri Daan Mogot Blok C-12, Jakarta Barat",
-        date: "Tgl: 15-10-2026",
-        invNo: "INVOICE: ASM-2026-881",
-        docType: "Wholesale Fleet Invoice (Toyota Genuine Motor Oil & Filters)",
-        items: [
-          {
-            raw: "04152-YZZA6 Fltr Oli Avanza Veloz 30 pcs @ Rp 27.000",
-            totalText: "Rp 810.000",
-            sku: "04152-YZZA6",
-            name: "Element Sub-Assy Oil Filter Avanza",
-            qty: 30,
-            unitPrice: 27000,
-            totalPrice: 810000,
-            catalog: "TOYOTA_TGP",
-            matchType: "Toyota Genuine Parts (TGP) exact match",
-            confidence: 0.99
-          },
-          {
-            raw: "08880-83322 Toyota Motor Oil 5W-30 SP 4L 8 gal @ Rp 340.000",
-            totalText: "Rp 2.720.000",
-            sku: "08880-83322",
-            name: "Toyota Motor Oil 5W-30 SP Synthetic 4L",
-            qty: 8,
-            unitPrice: 340000,
-            totalPrice: 2720000,
-            catalog: "TOYOTA_TGP",
-            matchType: "Toyota Genuine Parts (TGP) exact match",
-            confidence: 0.97
-          },
-          {
-            raw: "31250-BZ130 Clutch Disc Toyota Avanza 1.3 4 set @ Rp 465.000",
-            totalText: "Rp 1.860.000",
-            sku: "31250-BZ130",
-            name: "Clutch Disc Toyota Avanza 1.3",
-            qty: 4,
-            unitPrice: 465000,
-            totalPrice: 1860000,
-            catalog: "TOYOTA_TGP",
-            matchType: "Toyota Genuine Parts (TGP) exact match",
-            confidence: 0.98
-          }
-        ],
-        subtotal: 5390000,
-        tax: 592900,
-        grandTotal: 5982900,
-        tokens: "1,540 input tokens"
+      items: {
+        oil: { code: "OIL-MPX2", name: "Engine Oil AHM MPX2 0.8L", price: 4.50, installFees: { beat: 1.00, vario: 1.00, nmax: 1.50, pcx: 1.50 } },
+        pad: { code: "BRK-PAD-F", name: "Front Disc Brake Pad OEM", price: 6.00, installFees: { beat: 2.00, vario: 2.50, nmax: 3.00, pcx: 3.50 } },
+        belt: { code: "DRV-BELT", name: "CVT Drive Belt OEM Replacement", price: 14.00, installFees: { beat: 3.00, vario: 4.00, nmax: 5.50, pcx: 6.00 } },
+        tuneup: { code: "SVC-TUNE", name: "Routine Tune-Up & Throttle Clean", price: 0.00, installFees: { beat: 5.00, vario: 6.00, nmax: 8.00, pcx: 9.00 } },
       }
     };
 
-    let activeOcrTab = 1;
-    let isScanning = false;
+    // Current State
+    let currentVehKey = 'beat';
+    let demoCart = [
+      { id: 'oil', action: 'installed' },
+      { id: 'pad', action: 'installed' },
+      { id: 'belt', action: 'takeaway' },
+    ];
 
-    function formatRupiah(num) {
-      return "Rp " + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    function setDemoVehicle(key) {
+      currentVehKey = key;
+      const keys = ['beat', 'vario', 'nmax', 'pcx'];
+      keys.forEach(k => {
+        const btn = document.getElementById('btnVeh' + k.charAt(0).toUpperCase() + k.slice(1));
+        if (btn) {
+          if (k === key) {
+            btn.className = "p-2.5 rounded-lg border border-sky-500/50 bg-sky-500/10 text-white text-xs font-medium text-left transition-all";
+          } else {
+            btn.className = "p-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-white/[0.02] hover:bg-white/[0.04] text-slate-300 text-xs font-medium text-left transition-all";
+          }
+        }
+      });
+      renderDemoCart();
     }
 
-    function escapeHtml(str) {
-      if (typeof str !== 'string') return str;
-      return str.replace(/[&<>"']/g, function(m) {
+    function addDemoItem(itemId) {
+      demoCart.push({ id: itemId, action: 'installed' });
+      renderDemoCart();
+    }
+
+    function removeDemoItem(idx) {
+      demoCart.splice(idx, 1);
+      renderDemoCart();
+    }
+
+    function toggleDemoAction(idx, action) {
+      demoCart[idx].action = action;
+      renderDemoCart();
+    }
+
+    function resetDemoCart() {
+      demoCart = [];
+      renderDemoCart();
+    }
+
+    function renderDemoCart() {
+      const container = document.getElementById('demoCartList');
+      const veh = catalogDb.vehicles[currentVehKey];
+      let grandTotal = 0;
+
+      document.getElementById('demoItemCount').textContent = `${demoCart.length} Items`;
+
+      if (demoCart.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center text-slate-500 text-xs">
+            Cart is empty. Click "+ Quick Add Catalog Items" above to test pricing.
+          </div>
+        `;
+        document.getElementById('demoGrandTotal').textContent = "$0.00";
+        renderThermalSlip([], 0);
+        return;
+      }
+
+      const calculatedItems = demoCart.map((it, idx) => {
+        const itemData = catalogDb.items[it.id];
+        const isInstalled = it.action === 'installed';
+        const laborFee = isInstalled ? (itemData.installFees[currentVehKey] || 0) : 0;
+        const subtotal = itemData.price + laborFee;
+        grandTotal += subtotal;
+
         return {
-          '&': '&amp;',
-          '<': '&lt;',
-          '>': '&gt;',
-          '"': '&quot;',
-          "'": '&#039;'
-        }[m];
+          idx,
+          id: it.id,
+          name: itemData.name,
+          code: itemData.code,
+          price: itemData.price,
+          laborFee: laborFee,
+          subtotal: subtotal,
+          action: it.action,
+          isInstalled
+        };
       });
-    }
 
-    function renderOcrDocument() {
-      const data = ocrDatasets[activeOcrTab];
-      document.getElementById('receiptVendor').textContent = data.vendor;
-      document.getElementById('receiptAddress').textContent = data.address;
-      document.getElementById('receiptDate').textContent = data.date;
-      document.getElementById('receiptInvNo').textContent = data.invNo;
-      document.getElementById('docTypeLabel').textContent = data.docType;
-      document.getElementById('receiptSubtotalText').textContent = formatRupiah(data.subtotal);
-      document.getElementById('receiptPpnText').textContent = formatRupiah(data.tax);
-      document.getElementById('receiptGrandText').textContent = formatRupiah(data.grandTotal);
-
-      // Render Items with bounding box
-      const itemsList = document.getElementById('receiptItemsList');
-      itemsList.innerHTML = '';
-      data.items.forEach((item, idx) => {
-        const itemRow = document.createElement('div');
-        itemRow.className = "relative p-2 rounded hover:bg-slate-800/40 transition-colors group cursor-pointer";
-        itemRow.onclick = () => highlightLineItem(idx);
-        itemRow.innerHTML = `
-          <div class="flex justify-between items-start text-slate-200">
-            <div>
-              <div class="font-bold text-white">${escapeHtml(item.sku)}</div>
-              <div class="text-[10px] text-slate-400">${escapeHtml(item.name)} (${item.qty} pcs @ ${formatRupiah(item.unitPrice)})</div>
+      container.innerHTML = calculatedItems.map(item => `
+        <div class="p-3.5 flex items-center justify-between gap-3">
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold text-slate-200 truncate">${item.name}</div>
+            <div class="text-[10px] font-mono text-slate-500 flex items-center gap-2 mt-0.5">
+              <span>${item.code}</span>
+              <span>•</span>
+              <span>Part: $${item.price.toFixed(2)}</span>
+              ${item.isInstalled ? `<span class="text-sky-400 font-medium">• Labor (${veh.name}): +$${item.laborFee.toFixed(2)}</span>` : ''}
             </div>
-            <div class="font-bold text-sky-300 font-mono">${escapeHtml(item.totalText)}</div>
           </div>
-          <div class="ocr-box inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" id="box-${idx}"></div>
-        `;
-        itemsList.appendChild(itemRow);
+
+          <!-- Takeaway vs Installed Switcher -->
+          <div class="inline-flex rounded-lg bg-panel p-0.5 border border-[rgba(255,255,255,0.08)]">
+            <button onclick="toggleDemoAction(${item.idx}, 'takeaway')" class="px-2 py-1 rounded text-[10px] font-medium transition-all ${!item.isInstalled ? 'bg-white/10 text-white font-bold' : 'text-slate-400 hover:text-slate-200'}">
+              Takeaway
+            </button>
+            <button onclick="toggleDemoAction(${item.idx}, 'installed')" class="px-2 py-1 rounded text-[10px] font-medium transition-all ${item.isInstalled ? 'bg-sky-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-slate-200'}">
+              Installed
+            </button>
+          </div>
+
+          <!-- Subtotal & Remove -->
+          <div class="text-right font-mono font-bold text-slate-200 w-16">
+            $${item.subtotal.toFixed(2)}
+          </div>
+          <button onclick="removeDemoItem(${item.idx})" class="text-slate-500 hover:text-rose-400 p-1 text-sm transition-colors" title="Remove Item">&times;</button>
+        </div>
+      `).join('');
+
+      document.getElementById('demoGrandTotal').textContent = `$${grandTotal.toFixed(2)}`;
+      renderThermalSlip(calculatedItems, grandTotal);
+    }
+
+    function renderThermalSlip(items, total) {
+      const veh = catalogDb.vehicles[currentVehKey];
+      const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+      let lines = [];
+      lines.push("========================================");
+      lines.push("        BENGKELSTACK WORKSHOP OS        ");
+      lines.push("        SERVICE & REPAIR CENTER         ");
+      lines.push("========================================");
+      lines.push(`Receipt No : WO-00042`);
+      lines.push(`Date/Time  : ${now}`);
+      lines.push(`Plate No   : ${veh.plate} (${veh.name})`);
+      lines.push(`Customer   : ${veh.owner}`);
+      lines.push(`METHOD     : CASH TENDER`);
+      lines.push("----------------------------------------");
+      lines.push("ITEM                 ACTION     SUBTOTAL");
+      lines.push("----------------------------------------");
+
+      items.forEach(it => {
+        const shortName = (it.name.substring(0, 18) + "                  ").substring(0, 19);
+        const act = it.isInstalled ? "INSTALL " : "RETAIL  ";
+        const sub = ("        $" + it.subtotal.toFixed(2)).slice(-9);
+        lines.push(`${shortName} ${act} ${sub}`);
+        if (it.isInstalled && it.laborFee > 0) {
+          lines.push(`  Part: $${it.price.toFixed(2)} | Labor: $${it.laborFee.toFixed(2)}`);
+        }
       });
 
-      renderOcrJsonOutput();
-      renderReconciliationAudit();
+      lines.push("----------------------------------------");
+      const totalStr = ("                 $" + total.toFixed(2)).slice(-17);
+      lines.push(`TOTAL AMOUNT:            ${totalStr}`);
+      lines.push(`CASH TENDERED:           ${totalStr}`);
+      lines.push(`CHANGE DUE:                         $0.00`);
+      lines.push("========================================");
+      lines.push("       Thank you for your visit!        ");
+      lines.push("    Service Warranty 7 Days / 500 KM    ");
+      lines.push("========================================");
+
+      document.getElementById('demoThermalSlip').textContent = lines.join("
+");
     }
 
-    function renderOcrJsonOutput() {
-      const data = ocrDatasets[activeOcrTab];
-      document.getElementById('jsonMetaTokens').textContent = data.tokens;
-
-      const structuredJson = {
-        invoice_metadata: {
-          vendor: data.vendor,
-          invoice_number: data.invNo.replace("FAKTUR: ", "").replace("DELIVERY: ", "").replace("INVOICE: ", ""),
-          date: data.date.replace("Tgl: ", ""),
-          status: "EXTRACTED_AND_VERIFIED",
-          extractor_model: "bengkelstack-vision-v2-edge"
-        },
-        line_items: data.items.map(i => ({
-          extracted_sku: i.sku,
-          description: i.name,
-          quantity: i.qty,
-          unit_cost_idr: i.unitPrice,
-          line_total_idr: i.totalPrice,
-          matched_catalog: i.catalog,
-          match_confidence: i.confidence,
-          reconciliation_check: "PASS"
-        })),
-        financial_summary: {
-          calculated_subtotal: data.subtotal,
-          stated_subtotal: data.subtotal,
-          tax_ppn_11_pct: data.tax,
-          reconciled_grand_total: data.grandTotal,
-          discrepancy_delta: 0,
-          inventory_ready: true
-        }
-      };
-
-      document.getElementById('jsonDisplayCode').textContent = JSON.stringify(structuredJson, null, 2);
-    }
-
-    function renderReconciliationAudit() {
-      const data = ocrDatasets[activeOcrTab];
-      document.getElementById('statCalcSubtotal').textContent = formatRupiah(data.subtotal);
-      document.getElementById('statStatedSubtotal').textContent = formatRupiah(data.subtotal);
-      document.getElementById('statTax').textContent = formatRupiah(data.tax);
-      document.getElementById('statGrandTotal').textContent = formatRupiah(data.grandTotal);
-    }
-
-    function switchOcrTab(tabIndex) {
-      if (isScanning) return;
-      activeOcrTab = tabIndex;
-      for (let i = 1; i <= 3; i++) {
-        const btn = document.getElementById('tabReceipt' + i);
-        if (i === tabIndex) {
-          btn.className = "px-3.5 py-2 text-xs font-mono font-medium rounded-lg text-white bg-surface-300 border border-surface-border-bright whitespace-nowrap transition-all";
-        } else {
-          btn.className = "px-3.5 py-2 text-xs font-mono font-medium rounded-lg text-slate-400 hover:text-slate-200 whitespace-nowrap transition-all";
-        }
-      }
-      renderOcrDocument();
-    }
-
-    function triggerOcrScan() {
-      if (isScanning) return;
-      isScanning = true;
-      const container = document.getElementById('receiptContainer');
-      const badge = document.getElementById('docStatusBadge');
-      const scanBtn = document.getElementById('btnRunScan');
-
-      container.classList.add('scanner-active');
-      badge.textContent = "Analyzing 1568x1568 tile...";
-      badge.className = "text-amber-400 font-semibold animate-pulse";
-      scanBtn.disabled = true;
-      scanBtn.classList.add('opacity-70');
-
+    function simulateCheckout() {
+      const btn = document.getElementById('btnDemoCheckout');
+      btn.textContent = "✓ Order Settled & Printed!";
+      btn.className = "px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-400 text-slate-950 transition-all";
       setTimeout(() => {
-        container.classList.remove('scanner-active');
-        badge.textContent = "Extraction complete (1.4s)";
-        badge.className = "text-emerald-400 font-semibold";
-        scanBtn.disabled = false;
-        scanBtn.classList.remove('opacity-70');
-        isScanning = false;
-
-        // Flash green on reconciliation pass
-        const badgeReconcile = document.getElementById('reconcilePassBadge');
-        badgeReconcile.classList.add('bg-emerald-500/30');
-        setTimeout(() => badgeReconcile.classList.remove('bg-emerald-500/30'), 800);
-      }, 1400);
+        btn.textContent = "Simulate Checkout & Pay";
+        btn.className = "px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition-all shadow-md shadow-emerald-500/20";
+      }, 2500);
     }
 
-    function resetOcrScan() {
-      const container = document.getElementById('receiptContainer');
-      const badge = document.getElementById('docStatusBadge');
-      container.classList.remove('scanner-active');
-      badge.textContent = "Cache cleared";
-      badge.className = "text-slate-400 font-semibold";
-      renderOcrDocument();
-    }
-
-    function highlightLineItem(index) {
-      const box = document.getElementById('box-' + index);
-      if (box) {
-        box.classList.toggle('active');
-      }
-    }
-
-    function copyExtractedJson() {
-      const text = document.getElementById('jsonDisplayCode').textContent;
-      navigator.clipboard.writeText(text).then(() => {
-        const btnText = document.getElementById('copyJsonBtnText');
-        btnText.textContent = "Copied!";
-        setTimeout(() => btnText.textContent = "Copy JSON", 2000);
-      });
-    }
-
-    /* -------------------------------------------------------------
-       SIMULATOR 2: DYNAMIC LABOR & MARGIN ENGINE
-       ------------------------------------------------------------- */
-    const laborCatalog = {
-      honda_beat: {
-        name: "Honda Beat FI",
-        operations: [
-          {
-            id: "stem_bearing",
-            title: "Steering Stem Bearing Overhaul",
-            bookHours: 1.50,
-            sku: "53214-GN5-900",
-            partsPrice: 80000,
-            partsCost: 62500
-          },
-          {
-            id: "cvt_clean",
-            title: "CVT Clean & Roller Weight Replacement",
-            bookHours: 0.80,
-            sku: "22123-K44-V00",
-            partsPrice: 45000,
-            partsCost: 35000
-          }
-        ]
-      },
-      yamaha_aerox: {
-        name: "Yamaha Aerox 155",
-        operations: [
-          {
-            id: "vbelt_replace",
-            title: "CVT Drive Belt & Slider Overhaul",
-            bookHours: 1.20,
-            sku: "2DP-E7641-00",
-            partsPrice: 165000,
-            partsCost: 128000
-          },
-          {
-            id: "injector_flush",
-            title: "Fuel Injector Ultrasonic Flush",
-            bookHours: 1.00,
-            sku: "B65-E3770-00",
-            partsPrice: 60000,
-            partsCost: 45000
-          }
-        ]
-      },
-      toyota_avanza: {
-        name: "Toyota Avanza 1.3 Dual VVT-i",
-        operations: [
-          {
-            id: "clutch_overhaul",
-            title: "Clutch Disc & Pressure Plate Overhaul",
-            bookHours: 3.50,
-            sku: "31250-BZ130",
-            partsPrice: 850000,
-            partsCost: 660000
-          },
-          {
-            id: "brake_rotor",
-            title: "Front Brake Pads & Rotor Resurface",
-            bookHours: 1.80,
-            sku: "04465-BZ010",
-            partsPrice: 240000,
-            partsCost: 180000
-          }
-        ]
-      }
-    };
-
-    let selectedConditionMultiplier = 1.15;
-    let currentHourlyRate = 75000;
-
-    function handleLaborVehicleChange() {
-      const vKey = document.getElementById('calcVehicleSelect').value;
-      const opSelect = document.getElementById('calcOperationSelect');
-      opSelect.innerHTML = '';
-
-      laborCatalog[vKey].operations.forEach((op, idx) => {
-        const opt = document.createElement('option');
-        opt.value = op.id;
-        opt.textContent = op.title;
-        opSelect.appendChild(opt);
-      });
-
-      calculateLaborEngine();
-    }
-
-    function setConditionMultiplier(mult, btn) {
-      selectedConditionMultiplier = mult;
-      document.querySelectorAll('.condition-btn').forEach(b => {
-        b.className = "condition-btn px-3 py-2 text-xs font-medium rounded-lg bg-surface-100 border border-surface-border text-slate-300 hover:text-white transition-all text-center";
-      });
-      btn.className = "condition-btn active px-3 py-2 text-xs font-medium rounded-lg bg-surface-300 border border-sky-500/50 text-white transition-all text-center";
-      document.getElementById('multiplierValueBadge').textContent = mult.toFixed(2) + "x Multiplier";
-      calculateLaborEngine();
-    }
-
-    function handleRateSlider(val) {
-      currentHourlyRate = parseInt(val, 10);
-      document.getElementById('rateLabelDisplay').textContent = formatRupiah(currentHourlyRate) + " / hr";
-      calculateLaborEngine();
-    }
-
-    function calculateLaborEngine() {
-      const vKey = document.getElementById('calcVehicleSelect').value;
-      const opId = document.getElementById('calcOperationSelect').value;
-      const vehicle = laborCatalog[vKey];
-      const op = vehicle.operations.find(o => o.id === opId) || vehicle.operations[0];
-
-      const bookHours = op.bookHours;
-      const billableHours = parseFloat((bookHours * selectedConditionMultiplier).toFixed(2));
-      const laborCharge = Math.round(billableHours * currentHourlyRate);
-      const partsPrice = op.partsPrice;
-      const partsCost = op.partsCost;
-      const totalEstimate = laborCharge + partsPrice;
-
-      // Internal Cost & Margins (Technician rate = 46% of base hourly)
-      const technicianPayRate = currentHourlyRate * 0.46;
-      const internalLaborCost = Math.round(billableHours * technicianPayRate);
-      const totalShopCost = internalLaborCost + partsCost;
-      const shopGrossProfit = totalEstimate - totalShopCost;
-
-      const blendedMarginPct = ((shopGrossProfit / totalEstimate) * 100).toFixed(1);
-      const laborMarginPct = Math.round(((laborCharge - internalLaborCost) / laborCharge) * 100);
-      const partsMarginPct = Math.round(((partsPrice - partsCost) / partsPrice) * 100);
-
-      // Render Outputs
-      document.getElementById('dispBookTime').textContent = bookHours.toFixed(2) + " Hours";
-      document.getElementById('dispFactor').textContent = selectedConditionMultiplier.toFixed(2) + "x";
-      document.getElementById('dispBillableHours').textContent = billableHours.toFixed(2) + " Hours";
-      document.getElementById('mathHoursRateText').textContent = `${billableHours} hrs @ ${formatRupiah(currentHourlyRate)}`;
-      document.getElementById('dispLaborCharge').textContent = formatRupiah(laborCharge);
-      document.getElementById('dispPartsSkuBadge').textContent = op.sku;
-      document.getElementById('dispPartsPrice').textContent = formatRupiah(partsPrice);
-      document.getElementById('dispTotalEstimate').textContent = formatRupiah(totalEstimate);
-
-      document.getElementById('dispBlendedMarginText').textContent = blendedMarginPct + "% Blended Margin";
-      document.getElementById('dispLaborMarginPct').textContent = laborMarginPct + "%";
-      document.getElementById('dispPartsMarginPct').textContent = partsMarginPct + "%";
-
-      document.getElementById('barLaborMargin').style.width = Math.min(Math.max(laborMarginPct, 10), 90) + "%";
-      document.getElementById('barPartsMargin').style.width = Math.min(Math.max(partsMarginPct, 10), 90) + "%";
-    }
-
-    /* -------------------------------------------------------------
-       SIMULATOR 3: DIAGNOSTIC WORK ORDER PARSER
-       ------------------------------------------------------------- */
-    const complaintPresets = {
-      1: {
-        text: "Tarikan awal bergetar parah di bagian CVT, rem depan bunyi decit tajam saat deselerasi, dan oli mesin rembes tipis dekat baut pembuangan.",
-        woId: "WO-2026-1048",
-        vehicle: "Yamaha NMAX 155 (2021)",
-        mileage: "38.420 km",
-        bay: "Bay 02 (Quick Service)",
-        lead: "Senior Mechanic",
-        window: "65 Minutes",
-        tasks: [
-          {
-            desc: "Inspect CVT clutch housing and sliding sheave. Check V-Belt deflection.",
-            part: "Part: 2DP-E7641-00",
-            done: true
-          },
-          {
-            desc: "Measure front brake pad thickness. Inspect disc rotor runout.",
-            part: "Part: 2DP-F5805-00",
-            done: false
-          },
-          {
-            desc: "Replace oil drain plug copper crush washer. Refill with Yamalube Super Matic 10W-40 1L.",
-            part: "Part: 90430-12213",
-            done: false
-          }
-        ]
-      },
-      2: {
-        text: "Pedal kopling terasa amblas dan slip saat akselerasi tanjakan gigi 3. Bunyi dengung saat pedal dilepas penuh.",
-        woId: "WO-2026-1049",
-        vehicle: "Toyota Avanza 1.3 Dual VVT-i (2019)",
-        mileage: "82.150 km",
-        bay: "Bay 04 (Heavy Repair)",
-        lead: "Master Tech",
-        window: "210 Minutes",
-        tasks: [
-          {
-            desc: "Disassemble transmission bellhousing and inspect flywheel friction surface.",
-            part: "Part: 31250-BZ130",
-            done: true
-          },
-          {
-            desc: "Inspect release bearing and diaphragm spring fingers on pressure plate.",
-            part: "Part: 31230-BZ030",
-            done: false
-          },
-          {
-            desc: "Bleed hydraulic clutch master and slave cylinder with DOT 4 fluid.",
-            part: "Part: 08823-80004",
-            done: false
-          }
-        ]
-      }
-    };
-
-    function loadComplaintPreset(presetNum) {
-      const p = complaintPresets[presetNum];
-      document.getElementById('complaintTextarea').value = p.text;
-      parseComplaintIntake(presetNum);
-    }
-
-    function parseComplaintIntake(presetNum = 1) {
-      const p = complaintPresets[presetNum] || complaintPresets[1];
-      document.getElementById('woId').textContent = p.woId;
-      document.getElementById('woVehicle').textContent = p.vehicle;
-      document.getElementById('woMileage').textContent = p.mileage;
-      document.getElementById('woBay').textContent = p.bay;
-      document.getElementById('woLead').textContent = p.lead;
-      document.getElementById('woWindow').textContent = p.window;
-
-      const tasksContainer = document.getElementById('woTasksContainer');
-      tasksContainer.innerHTML = '';
-
-      p.tasks.forEach((t, i) => {
-        const item = document.createElement('div');
-        item.className = "p-3 rounded-xl bg-surface-100 border border-surface-border flex items-start gap-3 text-xs";
-        item.innerHTML = `
-          <input type="checkbox" ${t.done ? 'checked' : ''} class="mt-0.5 rounded bg-surface-200 border-surface-border text-sky-500 focus:ring-0">
-          <div class="flex-1">
-            <div class="text-slate-200 font-medium">${i + 1}. ${escapeHtml(t.desc)}</div>
-            <div class="mt-1">
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono bg-surface-200 text-sky-400 border border-surface-border">
-                ${escapeHtml(t.part)}
-              </span>
-            </div>
-          </div>
-        `;
-        tasksContainer.appendChild(item);
-      });
-    }
-
-    // Initialize all simulator components on load
-    document.addEventListener('DOMContentLoaded', () => {
-      renderOcrDocument();
-      handleLaborVehicleChange();
-      parseComplaintIntake(1);
-    });
+    // Initialize on page load
+    setDemoVehicle('beat');
   </script>
+
 </body>
 </html>
