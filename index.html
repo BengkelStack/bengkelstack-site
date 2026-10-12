@@ -838,11 +838,11 @@ Loading receipt stream...
           </div>
 
           <!-- Takeaway vs Installed Switcher -->
-          <div class="inline-flex rounded-lg bg-panel p-0.5 border border-[rgba(255,255,255,0.08)]">
-            <button onclick="toggleDemoAction(${item.idx}, 'takeaway')" class="px-2 py-1 rounded text-[10px] font-medium transition-all ${!item.isInstalled ? 'bg-white/10 text-white font-bold' : 'text-slate-400 hover:text-slate-200'}">
+          <div class="inline-flex rounded-lg bg-canvas p-0.5 border border-[rgba(255,255,255,0.1)]">
+            <button onclick="toggleDemoAction(${item.idx}, 'takeaway')" class="px-2.5 py-1 rounded text-[10px] font-bold transition-all ${!item.isInstalled ? 'bg-amber-400 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'}">
               Takeaway
             </button>
-            <button onclick="toggleDemoAction(${item.idx}, 'installed')" class="px-2 py-1 rounded text-[10px] font-medium transition-all ${item.isInstalled ? 'bg-sky-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-slate-200'}">
+            <button onclick="toggleDemoAction(${item.idx}, 'installed')" class="px-2.5 py-1 rounded text-[10px] font-bold transition-all ${item.isInstalled ? 'bg-sky-400 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'}">
               Installed
             </button>
           </div>
@@ -859,6 +859,15 @@ Loading receipt stream...
       renderThermalSlip(calculatedItems, grandTotal);
     }
 
+    function padLine(left, right, width = 40) {
+      const l = String(left || '');
+      const r = String(right || '');
+      if (l.length + r.length >= width) {
+        return (l.substring(0, width - r.length - 1) + ' ' + r).substring(0, width);
+      }
+      return l + ' '.repeat(width - l.length - r.length) + r;
+    }
+
     function renderThermalSlip(items, total) {
       const mkt = marketCatalogs[currentMarketKey];
       const veh = mkt.vehicles[currentVehKey] || Object.values(mkt.vehicles)[0];
@@ -869,30 +878,27 @@ Loading receipt stream...
       lines.push("        BENGKELSTACK WORKSHOP OS        ");
       lines.push("        SERVICE & REPAIR CENTER         ");
       lines.push("========================================");
-      lines.push("Receipt No : WO-00042");
-      lines.push("Date/Time  : " + now);
-      lines.push("Plate No   : " + veh.plate + " (" + veh.name + ")");
-      lines.push("Customer   : " + veh.owner);
-      lines.push("METHOD     : CASH TENDER");
+      lines.push(padLine("Receipt No:", "WO-00042"));
+      lines.push(padLine("Date/Time:", now));
+      lines.push(padLine("Plate No:", `${veh.plate} (${veh.name})`));
+      lines.push(padLine("Customer:", veh.owner));
+      lines.push(padLine("Method:", "CASH TENDER"));
       lines.push("----------------------------------------");
-      lines.push("ITEM                 ACTION     SUBTOTAL");
+      lines.push(padLine("ITEM (ACTION)", "SUBTOTAL"));
       lines.push("----------------------------------------");
 
       items.forEach(it => {
-        const shortName = (it.name.substring(0, 18) + "                  ").substring(0, 19);
-        const act = it.isInstalled ? "INSTALL " : "RETAIL  ";
-        const sub = ("               " + formatCurrency(it.subtotal)).slice(-10);
-        lines.push(shortName + " " + act + " " + sub);
+        const actLabel = it.isInstalled ? "INSTALL" : "RETAIL";
+        lines.push(padLine(`${it.name.substring(0, 20)} [${actLabel}]`, formatCurrency(it.subtotal)));
         if (it.isInstalled && it.laborFee > 0) {
-          lines.push("  Part: " + formatCurrency(it.price) + " | Labor: " + formatCurrency(it.laborFee));
+          lines.push(padLine(`  Part: ${formatCurrency(it.price)}`, `Labor: ${formatCurrency(it.laborFee)}`));
         }
       });
 
       lines.push("----------------------------------------");
-      const totalStr = ("                        " + formatCurrency(total)).slice(-18);
-      lines.push("TOTAL AMOUNT:     " + totalStr);
-      lines.push("CASH TENDERED:    " + totalStr);
-      lines.push("CHANGE DUE:                                0");
+      lines.push(padLine("TOTAL AMOUNT:", formatCurrency(total)));
+      lines.push(padLine("CASH TENDERED:", formatCurrency(total)));
+      lines.push(padLine("CHANGE DUE:", formatCurrency(0)));
       lines.push("========================================");
       lines.push("       Thank you for your visit!        ");
       lines.push("    Service Warranty 7 Days / 500 KM    ");
