@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BengkelStack — SuperAdmin HQ Fleet Dashboard</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            canvas: '#08090a',
+            panel: '#0f1011',
+            surface: '#151719',
+            'surface-hover': '#1c1e21',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-canvas text-slate-200 font-sans min-h-screen flex flex-col selection:bg-sky-500/30 selection:text-sky-200">
+
+  <!-- Top Navbar -->
+  <header class="border-b border-white/[0.08] bg-panel/90 backdrop-blur-md px-6 py-3.5 flex items-center justify-between sticky top-0 z-40">
+    <div class="flex items-center gap-4">
+      <a href="index.html" class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-sky-500 flex items-center justify-center font-mono font-bold text-slate-950 text-xs">
+          HQ
+        </div>
+        <span class="font-semibold tracking-tight text-white text-sm">Bengkel<span class="text-sky-400">Stack</span></span>
+      </a>
+      <span class="h-4 w-px bg-white/[0.1]"></span>
+      <span class="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+        Master SuperAdmin Active
+      </span>
+    </div>
+
+    <div class="flex items-center gap-4">
+      <span id="adminGreeting" class="text-xs text-slate-400 font-mono hidden sm:inline">admin@bengkelstack.com</span>
+      <button id="btnLogout" class="px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-hover text-slate-300 hover:text-white border border-white/[0.08] text-xs font-medium transition-colors cursor-pointer">
+        Sign Out
+      </button>
+    </div>
+  </header>
+
+  <!-- Dashboard Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    
+    <!-- Header Title -->
+    <div>
+      <h1 class="text-xl font-bold text-white tracking-tight">Global Fleet & Tenant Management</h1>
+      <p class="text-xs text-slate-400 mt-1">Real-time health, active workshop nodes, and global telemetry.</p>
+    </div>
+
+    <!-- 4 Overview Metric Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <div class="bg-panel border border-white/[0.08] rounded-xl p-5 relative overflow-hidden">
+        <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400">Total Workshop Tenants</div>
+        <div id="statTotalTenants" class="text-2xl font-bold font-mono text-white mt-2">148</div>
+        <div class="text-[11px] text-emerald-400 mt-2 flex items-center gap-1 font-mono">
+          <span>↑ +12 this month</span>
+        </div>
+      </div>
+
+      <div class="bg-panel border border-white/[0.08] rounded-xl p-5 relative overflow-hidden">
+        <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400">Active Paid Subscriptions</div>
+        <div id="statActiveTenants" class="text-2xl font-bold font-mono text-emerald-400 mt-2">132</div>
+        <div class="text-[11px] text-slate-400 mt-2 font-mono">
+          <span>89.2% retention rate</span>
+        </div>
+      </div>
+
+      <div class="bg-panel border border-white/[0.08] rounded-xl p-5 relative overflow-hidden">
+        <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400">Pending Trials</div>
+        <div id="statTrialTenants" class="text-2xl font-bold font-mono text-amber-400 mt-2">11</div>
+        <div class="text-[11px] text-amber-400/80 mt-2 font-mono">
+          <span>3 conversions pending</span>
+        </div>
+      </div>
+
+      <div class="bg-panel border border-white/[0.08] rounded-xl p-5 relative overflow-hidden">
+        <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400">Total Sync Events (Idempotent)</div>
+        <div id="statSyncEvents" class="text-2xl font-bold font-mono text-sky-400 mt-2">184,920</div>
+        <div class="text-[11px] text-slate-400 mt-2 font-mono">
+          <span>0 integrity violations</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Tenant Management Section -->
+    <div class="bg-panel border border-white/[0.08] rounded-xl overflow-hidden shadow-xl">
+      
+      <!-- Toolbar -->
+      <div class="p-4 sm:p-5 border-b border-white/[0.08] flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <div class="relative flex-1 sm:w-64">
+            <input 
+              type="text" 
+              id="searchInput" 
+              placeholder="Search workshop or slug..." 
+              class="w-full pl-9 pr-3 py-1.5 rounded-lg bg-surface border border-white/[0.08] text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 font-sans"
+            >
+            <svg class="w-4 h-4 text-slate-500 absolute left-2.5 top-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </div>
+
+          <select id="statusFilter" class="px-3 py-1.5 rounded-lg bg-surface border border-white/[0.08] text-xs text-white focus:outline-none focus:border-sky-500 cursor-pointer">
+            <option value="ALL">All Statuses</option>
+            <option value="ACTIVE" selected>Active Only</option>
+            <option value="TRIAL">Trial</option>
+            <option value="SUSPENDED">Suspended</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <button id="btnRefresh" class="px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-hover text-slate-300 border border-white/[0.08] text-xs font-mono transition-colors flex items-center gap-1.5 cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <span>Refresh</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Table View -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="border-b border-white/[0.08] bg-surface text-slate-400 font-mono uppercase text-[10px]">
+              <th class="py-3 px-4">Tenant ID</th>
+              <th class="py-3 px-4">Workshop & Trading Name</th>
+              <th class="py-3 px-4">Region</th>
+              <th class="py-3 px-4">License Plan</th>
+              <th class="py-3 px-4">Edge Sync</th>
+              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tenantTableBody" class="divide-y divide-white/[0.04]">
+            <!-- Dynamic Rows populated by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Table Footer / Pagination -->
+      <div class="p-4 border-t border-white/[0.08] flex items-center justify-between text-xs text-slate-400 font-mono">
+        <span id="paginationInfo">Showing 1 to 4 of 4 workshops</span>
+        <div class="flex gap-2">
+          <button class="px-2.5 py-1 rounded bg-surface border border-white/[0.08] text-slate-400 hover:text-white disabled:opacity-40" disabled>Previous</button>
+          <button class="px-2.5 py-1 rounded bg-surface border border-white/[0.08] text-slate-400 hover:text-white disabled:opacity-40" disabled>Next</button>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Action Modal -->
+  <div id="actionModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-panel border border-white/[0.1] rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+      <h3 class="text-base font-bold text-white mb-2" id="modalTitle">Tenant Control Action</h3>
+      <p class="text-xs text-slate-400 mb-6" id="modalSubtitle">Modify tenant status or access rights</p>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Target Action</label>
+          <select id="modalActionSelect" class="w-full px-3 py-2 rounded-lg bg-surface border border-white/[0.08] text-xs text-white focus:outline-none focus:border-sky-500">
+            <option value="SUSPEND">Suspend Tenant (Cutoff sync immediately)</option>
+            <option value="ACTIVATE">Activate Tenant</option>
+            <option value="UPGRADE_PRO">Upgrade to Pro Sync Tier</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Reason / Operator Notes</label>
+          <input type="text" id="modalReasonInput" placeholder="e.g. Overdue payment billing cycle" class="w-full px-3 py-2 rounded-lg bg-surface border border-white/[0.08] text-xs text-white focus:outline-none focus:border-sky-500">
+        </div>
+      </div>
+
+      <div class="mt-8 flex justify-end gap-3">
+        <button id="btnModalCancel" class="px-4 py-2 rounded-lg bg-surface hover:bg-surface-hover text-slate-300 text-xs font-medium border border-white/[0.08] cursor-pointer">Cancel</button>
+        <button id="btnModalConfirm" class="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-medium shadow cursor-pointer">Execute Action</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let tenants = [
+      { id: 1, slug: 'jaya-abadi', name: 'Jaya Abadi Motor', country: 'ID 🇮🇩', plan: 'PRO', sync: '12s ago', status: 'ACTIVE' },
+      { id: 2, slug: 'sentosa-speed', name: 'Sentosa Speed Workshop', country: 'ID 🇮🇩', plan: 'PRO', sync: '45s ago', status: 'ACTIVE' },
+      { id: 3, slug: 'motospeed-vn', name: 'MotoSpeed Saigon', country: 'VN 🇻🇳', plan: 'TRIAL', sync: '2m ago', status: 'TRIAL' },
+      { id: 4, slug: 'bangkok-tuning', name: 'Bangkok Motor Care', country: 'TH 🇹🇭', plan: 'FREE', sync: 'Offline', status: 'SUSPENDED' }
+    ];
+
+    let selectedTenantId = null;
+
+    const tbody = document.getElementById('tenantTableBody');
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const modal = document.getElementById('actionModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalAction = document.getElementById('modalActionSelect');
+    const modalReason = document.getElementById('modalReasonInput');
+    const btnCancel = document.getElementById('btnModalCancel');
+    const btnConfirm = document.getElementById('btnModalConfirm');
+
+    function renderTable() {
+      // Clear rows safely without innerHTML
+      while (tbody.firstChild) {
+        tbody.removeChild(tbody.firstChild);
+      }
+
+      const q = searchInput.value.toLowerCase().trim();
+      const st = statusFilter.value;
+
+      const filtered = tenants.filter(t => {
+        const matchQ = t.name.toLowerCase().includes(q) || t.slug.toLowerCase().includes(q);
+        const matchS = st === 'ALL' || t.status === st;
+        return matchQ && matchS;
+      });
+
+      document.getElementById('paginationInfo').textContent = `Showing 1 to ${filtered.length} of ${tenants.length} workshops`;
+
+      filtered.forEach(t => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-white/[0.02] transition-colors';
+
+        // 1. Tenant ID
+        const tdId = document.createElement('td');
+        tdId.className = 'py-3 px-4 font-mono text-slate-400';
+        tdId.textContent = `#${t.id.toString().padStart(4, '0')}`;
+        tr.appendChild(tdId);
+
+        // 2. Name & Slug
+        const tdName = document.createElement('td');
+        tdName.className = 'py-3 px-4';
+        const divName = document.createElement('div');
+        divName.className = 'font-medium text-white';
+        divName.textContent = t.name;
+        const divSlug = document.createElement('div');
+        divSlug.className = 'text-[11px] font-mono text-slate-500';
+        divSlug.textContent = t.slug;
+        tdName.appendChild(divName);
+        tdName.appendChild(divSlug);
+        tr.appendChild(tdName);
+
+        // 3. Region
+        const tdReg = document.createElement('td');
+        tdReg.className = 'py-3 px-4 font-mono';
+        tdReg.textContent = t.country;
+        tr.appendChild(tdReg);
+
+        // 4. Plan
+        const tdPlan = document.createElement('td');
+        tdPlan.className = 'py-3 px-4';
+        const spanPlan = document.createElement('span');
+        spanPlan.className = 'px-2 py-0.5 rounded font-mono text-[10px] bg-white/[0.06] border border-white/[0.08] text-slate-300';
+        spanPlan.textContent = t.plan;
+        tdPlan.appendChild(spanPlan);
+        tr.appendChild(tdPlan);
+
+        // 5. Edge Sync
+        const tdSync = document.createElement('td');
+        tdSync.className = 'py-3 px-4 font-mono text-[11px] text-slate-400';
+        tdSync.textContent = t.sync;
+        tr.appendChild(tdSync);
+
+        // 6. Status
+        const tdStatus = document.createElement('td');
+        tdStatus.className = 'py-3 px-4';
+        const spanSt = document.createElement('span');
+        if (t.status === 'ACTIVE') {
+          spanSt.className = 'px-2 py-0.5 rounded font-mono text-[10px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400';
+        } else if (t.status === 'TRIAL') {
+          spanSt.className = 'px-2 py-0.5 rounded font-mono text-[10px] bg-amber-500/10 border border-amber-500/20 text-amber-400';
+        } else {
+          spanSt.className = 'px-2 py-0.5 rounded font-mono text-[10px] bg-rose-500/10 border border-rose-500/20 text-rose-400';
+        }
+        spanSt.textContent = t.status;
+        tdStatus.appendChild(spanSt);
+        tr.appendChild(tdStatus);
+
+        // 7. Actions
+        const tdAct = document.createElement('td');
+        tdAct.className = 'py-3 px-4 text-right';
+        const btnAct = document.createElement('button');
+        btnAct.className = 'px-2.5 py-1 rounded bg-surface hover:bg-surface-hover border border-white/[0.08] text-slate-300 hover:text-white font-mono text-[11px] transition-colors cursor-pointer';
+        btnAct.textContent = 'Manage';
+        btnAct.addEventListener('click', () => openModal(t));
+        tdAct.appendChild(btnAct);
+        tr.appendChild(tdAct);
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openModal(tenant) {
+      selectedTenantId = tenant.id;
+      modalTitle.textContent = `Manage: ${tenant.name}`;
+      modalAction.value = tenant.status === 'ACTIVE' ? 'SUSPEND' : 'ACTIVATE';
+      modalReason.value = '';
+      modal.classList.remove('hidden');
+    }
+
+    btnCancel.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+
+    btnConfirm.addEventListener('click', () => {
+      if (!selectedTenantId) return;
+      const target = tenants.find(t => t.id === selectedTenantId);
+      if (target) {
+        if (modalAction.value === 'SUSPEND') {
+          target.status = 'SUSPENDED';
+          target.sync = 'Cutoff';
+        } else if (modalAction.value === 'ACTIVATE') {
+          target.status = 'ACTIVE';
+          target.sync = 'Just now';
+        } else if (modalAction.value === 'UPGRADE_PRO') {
+          target.plan = 'PRO';
+          target.status = 'ACTIVE';
+        }
+      }
+      modal.classList.add('hidden');
+      renderTable();
+    });
+
+    searchInput.addEventListener('input', renderTable);
+    statusFilter.addEventListener('change', renderTable);
+    document.getElementById('btnRefresh').addEventListener('click', renderTable);
+
+    document.getElementById('btnLogout').addEventListener('click', () => {
+      localStorage.removeItem('bk_auth_token');
+      localStorage.removeItem('bk_user_data');
+      window.location.href = 'login.html';
+    });
+
+    // Initial render
+    renderTable();
+  </script>
+</body>
+</html>

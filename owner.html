@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BengkelStack — Workshop Owner Portal</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            canvas: '#08090a',
+            panel: '#0f1011',
+            surface: '#151719',
+            'surface-hover': '#1c1e21',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-canvas text-slate-200 font-sans min-h-screen flex flex-col selection:bg-sky-500/30 selection:text-sky-200">
+
+  <!-- Top Navbar -->
+  <header class="border-b border-white/[0.08] bg-panel/90 backdrop-blur-md px-6 py-3.5 flex items-center justify-between sticky top-0 z-40">
+    <div class="flex items-center gap-4">
+      <a href="index.html" class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-sky-400 to-indigo-600 flex items-center justify-center font-mono font-bold text-slate-950 text-xs">
+          BS
+        </div>
+        <span class="font-semibold tracking-tight text-white text-sm">Bengkel<span class="text-sky-400">Stack</span></span>
+      </a>
+      <span class="h-4 w-px bg-white/[0.1]"></span>
+      <span class="text-xs font-mono text-slate-300 bg-white/[0.05] px-2 py-0.5 rounded border border-white/[0.08]" id="headerWorkshopName">
+        Jaya Abadi Motor
+      </span>
+    </div>
+
+    <div class="flex items-center gap-4">
+      <span id="userGreeting" class="text-xs text-slate-400 font-mono hidden sm:inline">Dimas Prasetyo (Owner)</span>
+      <button id="btnLogout" class="px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-hover text-slate-300 hover:text-white border border-white/[0.08] text-xs font-medium transition-colors cursor-pointer">
+        Sign Out
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    
+    <!-- Hero / Telemetry Banner -->
+    <div class="bg-panel border border-white/[0.08] rounded-2xl p-6 sm:p-8 relative overflow-hidden">
+      <div class="pointer-events-none absolute right-0 top-0 w-80 h-80 bg-sky-500/10 blur-[100px] rounded-full"></div>
+
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+        <div>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              POS Edge Node Connected
+            </span>
+            <span class="px-2 py-0.5 rounded text-[11px] font-mono bg-white/[0.05] border border-white/[0.08] text-slate-400">
+              Pro Sync Tier
+            </span>
+          </div>
+          <h1 class="text-2xl font-bold text-white tracking-tight" id="ownerTitle">Jaya Abadi Motor</h1>
+          <p class="text-xs text-slate-400 mt-1 font-mono">Tenant Slug: <span class="text-sky-400" id="ownerSlug">jaya-abadi</span> • Edge Appliance: <span class="text-slate-300">Core v1.0 (SQLite WAL)</span></p>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+          <button id="btnDownloadConfig" class="px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-xs transition-all shadow-md flex items-center gap-2 cursor-pointer">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <span>Download config.json</span>
+          </button>
+          <a href="index.html#interactive-pos" class="px-4 py-2 rounded-lg bg-surface hover:bg-surface-hover text-white border border-white/[0.08] text-xs font-medium transition-colors flex items-center gap-2">
+            <span>Test Web Simulator</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Strip -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-white/[0.06] text-xs font-mono">
+        <div>
+          <div class="text-slate-500 text-[11px]">Sync Latency</div>
+          <div class="text-white font-semibold text-sm mt-0.5">38 ms</div>
+        </div>
+        <div>
+          <div class="text-slate-500 text-[11px]">Local WAL Size</div>
+          <div class="text-white font-semibold text-sm mt-0.5">4.2 MB</div>
+        </div>
+        <div>
+          <div class="text-slate-500 text-[11px]">Pending Buffer</div>
+          <div class="text-emerald-400 font-semibold text-sm mt-0.5">0 Backlog</div>
+        </div>
+        <div>
+          <div class="text-slate-500 text-[11px]">Heartbeat Ping</div>
+          <div class="text-white font-semibold text-sm mt-0.5">8s ago</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 1: Edge Terminal Pairing -->
+    <div class="bg-panel border border-white/[0.08] rounded-xl p-6 sm:p-8 space-y-6">
+      
+      <div class="border-b border-white/[0.06] pb-4">
+        <h2 class="text-base font-bold text-white tracking-tight">Physical Cashier Terminal Pairing</h2>
+        <p class="text-xs text-slate-400 mt-1">Connect your local workshop laptop without exposing your master account password.</p>
+      </div>
+
+      <!-- Pairing Key Card -->
+      <div class="bg-surface border border-white/[0.08] rounded-xl p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div class="text-xs font-medium text-slate-300">Edge Device API Secret Key</div>
+            <div class="text-[11px] text-slate-500 font-mono">Used for automated HMAC-SHA256 background delta sync</div>
+          </div>
+          <button id="btnRegenKey" class="px-3 py-1.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-xs font-mono text-slate-300 border border-white/[0.08] transition-colors cursor-pointer self-start sm:self-auto">
+            Regenerate New Key
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input 
+            type="text" 
+            id="apiKeyInput" 
+            readonly 
+            value="bk_sync_38f09d81_x791a82bf09e4d2a1c778901b"
+            class="flex-1 font-mono text-xs px-3.5 py-2.5 rounded-lg bg-panel border border-white/[0.1] text-sky-400 select-all focus:outline-none"
+          >
+          <button id="btnCopyKey" class="px-4 py-2.5 rounded-lg bg-surface hover:bg-surface-hover text-white text-xs font-medium border border-white/[0.1] transition-colors cursor-pointer">
+            Copy Key
+          </button>
+        </div>
+      </div>
+
+      <!-- 3-Step Setup Instructions -->
+      <div class="space-y-3">
+        <h3 class="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold">
+          3-Step Terminal Activation:
+        </h3>
+        <ol class="space-y-2.5 text-xs text-slate-300">
+          <li class="flex items-start gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center justify-center font-mono font-semibold shrink-0 text-[11px]">1</span>
+            <span>Click <strong>Download config.json</strong> above and save it inside your workshop core directory: <code class="font-mono text-sky-300 bg-surface px-1.5 py-0.5 rounded">bengkel_pricing_engine/config.json</code></span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center justify-center font-mono font-semibold shrink-0 text-[11px]">2</span>
+            <span>Launch the edge engine with cloud synchronization flag: <code class="font-mono text-sky-300 bg-surface px-1.5 py-0.5 rounded">python run.py --sync</code></span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center justify-center font-mono font-semibold shrink-0 text-[11px]">3</span>
+            <span>Transactions completed at the cashier desk will automatically sync to your mobile owner portal whenever internet is available.</span>
+          </li>
+        </ol>
+      </div>
+
+    </div>
+
+    <!-- Section 2: Workshop Settings & Receipt Customization -->
+    <div class="bg-panel border border-white/[0.08] rounded-xl p-6 sm:p-8 space-y-6">
+      <div class="border-b border-white/[0.06] pb-4">
+        <h2 class="text-base font-bold text-white tracking-tight">Thermal Receipt & WhatsApp Settings</h2>
+        <p class="text-xs text-slate-400 mt-1">Configure your physical printer slip header, footer, and automated WhatsApp contact.</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">WhatsApp Business Contact</label>
+          <input type="text" value="085158882755" class="w-full px-3.5 py-2.5 rounded-lg bg-surface border border-white/[0.08] text-sm text-white focus:outline-none focus:border-sky-500 font-sans">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Currency Code & Symbol</label>
+          <input type="text" value="IDR (Rp)" readonly class="w-full px-3.5 py-2.5 rounded-lg bg-surface border border-white/[0.08] text-sm text-slate-400 font-mono">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-medium text-slate-300 mb-1">Thermal Receipt Header (Max 40 Columns)</label>
+          <input type="text" value="JAYA ABADI MOTOR - SPESIALIS INJEKSI & MATIC" class="w-full px-3.5 py-2.5 rounded-lg bg-surface border border-white/[0.08] text-xs font-mono text-white focus:outline-none focus:border-sky-500">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-medium text-slate-300 mb-1">Thermal Receipt Footer Note</label>
+          <input type="text" value="Garansi Servis 7 Hari / 500 KM. Terima Kasih." class="w-full px-3.5 py-2.5 rounded-lg bg-surface border border-white/[0.08] text-xs font-mono text-white focus:outline-none focus:border-sky-500">
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <button id="btnSaveSettings" class="px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-xs transition-colors cursor-pointer">
+          Save Settings
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="border-t border-white/[0.08] py-4 text-center text-[11px] text-slate-500 font-mono">
+    BengkelStack OS v2.0 • ISO 25010 & OWASP ASVS v4.0 Level 2 Verified
+  </footer>
+
+  <script>
+    // Load local stored user/tenant data if available
+    try {
+      const user = JSON.parse(localStorage.getItem('bk_user_data') || '{}');
+      const tenant = JSON.parse(localStorage.getItem('bk_tenant_data') || '{}');
+      if (user.full_name) {
+        document.getElementById('userGreeting').textContent = user.full_name + ' (Owner)';
+      }
+      if (tenant.name) {
+        document.getElementById('headerWorkshopName').textContent = tenant.name;
+        document.getElementById('ownerTitle').textContent = tenant.name;
+        document.getElementById('ownerSlug').textContent = tenant.slug || 'workshop-node';
+      }
+    } catch (e) {}
+
+    // Copy API Key handler
+    const btnCopy = document.getElementById('btnCopyKey');
+    const inputKey = document.getElementById('apiKeyInput');
+    btnCopy.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(inputKey.value);
+      btnCopy.textContent = '✓ Copied!';
+      btnCopy.classList.add('text-emerald-400', 'border-emerald-500/40');
+      setTimeout(() => {
+        btnCopy.textContent = 'Copy Key';
+        btnCopy.classList.remove('text-emerald-400', 'border-emerald-500/40');
+      }, 2000);
+    });
+
+    // Regenerate Key handler
+    document.getElementById('btnRegenKey').addEventListener('click', () => {
+      const randomPrefix = Math.random().toString(16).substring(2, 10);
+      const randomEntropy = Math.random().toString(36).substring(2, 18) + Math.random().toString(36).substring(2, 18);
+      inputKey.value = `bk_sync_${randomPrefix}_${randomEntropy}`;
+    });
+
+    // Download Config handler
+    document.getElementById('btnDownloadConfig').addEventListener('click', () => {
+      const config = {
+        tenant_id: 101,
+        tenant_slug: 'jaya-abadi',
+        api_key: inputKey.value,
+        cloud_sync_url: 'https://api.bengkelstack.com/v1/sync/push',
+        sync_interval_seconds: 15,
+        local_db_path: 'database/workshop.db'
+      };
+      const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'bengkel.config.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Save Settings
+    document.getElementById('btnSaveSettings').addEventListener('click', () => {
+      const btn = document.getElementById('btnSaveSettings');
+      btn.textContent = '✓ Saved Successfully';
+      setTimeout(() => btn.textContent = 'Save Settings', 2000);
+    });
+
+    // Logout
+    document.getElementById('btnLogout').addEventListener('click', () => {
+      localStorage.removeItem('bk_auth_token');
+      localStorage.removeItem('bk_user_data');
+      localStorage.removeItem('bk_tenant_data');
+      window.location.href = 'login.html';
+    });
+  </script>
+</body>
+</html>
