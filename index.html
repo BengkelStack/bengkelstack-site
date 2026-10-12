@@ -167,23 +167,38 @@
     <section id="interactive-pos" class="py-20 border-b border-[rgba(255,255,255,0.06)] bg-panel/40">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <div class="mb-10">
-          <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
-            <div class="max-w-3xl">
-              <div class="text-xs font-mono text-sky-400 uppercase tracking-widest font-semibold mb-2">Country-Specific Fleet Simulator</div>
-              <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">
-                Localized Down to the Exact Fleet &amp; Currency of Each Country
-              </h2>
-              <p class="mt-3 text-sm sm:text-base text-slate-400 leading-relaxed">
-                Motorcycle fleets, registration plates, and repair complexities differ fundamentally across borders. Select any country below to see BengkelStack adapt its vehicle catalog, local currency formatting, and labor matrices:
-              </p>
-            </div>
+        <!-- Interactive Section Header with Compact Country Dropdown -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-[rgba(255,255,255,0.06)]">
+          <div>
+            <div class="text-xs font-mono text-sky-400 uppercase tracking-widest font-semibold mb-1">Interactive Fleet Simulator</div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              Multi-Market Workshop Fleet &amp; Dynamic Pricing
+            </h2>
+            <p class="mt-1 text-xs sm:text-sm text-slate-400">
+              Adapts vehicle models, license plate syntax, currencies, and labor matrices automatically.
+            </p>
           </div>
 
-          <!-- Country Selector Ribbon (8 Major Motorcycle Markets) -->
-          <div class="p-2 sm:p-2.5 rounded-2xl bg-panel/80 border border-[rgba(255,255,255,0.08)] shadow-lg backdrop-blur-md">
-            <div class="flex flex-wrap items-center gap-2 select-none" id="countryRibbon">
-              <!-- Dynamically populated with active flag indicators -->
+          <!-- Compact Sleek Country Dropdown (Eliminates Stacked Clutter) -->
+          <div class="flex items-center gap-3 self-start md:self-center flex-shrink-0">
+            <label for="countrySelect" class="text-xs font-mono text-slate-400 uppercase tracking-wider font-medium flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              <span>Market Fleet:</span>
+            </label>
+            <div class="relative">
+              <select id="countrySelect" onchange="setCountryMarket(this.value)" class="appearance-none pr-9 pl-3.5 py-2 rounded-xl bg-surface border border-[rgba(255,255,255,0.12)] text-white text-xs font-mono font-medium focus:border-sky-400 focus:outline-none transition-all cursor-pointer hover:border-white/20 shadow-md">
+                <option value="ID">🇮🇩 Indonesia (Rp IDR)</option>
+                <option value="VN">🇻🇳 Vietnam (₫ VND)</option>
+                <option value="TH">🇹🇭 Thailand (฿ THB)</option>
+                <option value="PH">🇵🇭 Philippines (₱ PHP)</option>
+                <option value="MY">🇲🇾 Malaysia (RM MYR)</option>
+                <option value="IN">🇮🇳 India (₹ INR)</option>
+                <option value="US" selected>🇺🇸 United States ($ USD)</option>
+                <option value="GB">🇬🇧 United Kingdom (£ GBP)</option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+              </div>
             </div>
           </div>
         </div>
@@ -1180,22 +1195,11 @@ Loading receipt stream...
       }
     }
 
-    function renderCountryRibbon() {
-      const ribbon = document.getElementById('countryRibbon');
-      if (!ribbon) return;
-      ribbon.innerHTML = Object.entries(countryCatalogs).map(([code, c]) => {
-        const isActive = code === currentCountryKey;
-        const activeClass = isActive 
-          ? "bg-sky-500 text-slate-950 font-bold border-sky-400 shadow-md shadow-sky-500/20" 
-          : "bg-surface hover:bg-surface-hover text-slate-300 border-[rgba(255,255,255,0.08)] hover:text-white";
-        return `
-          <button onclick="setCountryMarket('${code}')" class="px-3.5 py-2 rounded-xl text-xs font-medium border flex items-center gap-2 whitespace-nowrap transition-all ${activeClass}">
-            <span class="text-base">${c.flag}</span>
-            <span>${c.name}</span>
-            <span class="text-[10px] opacity-75 font-mono">(${c.currency} ${c.currencyCode})</span>
-          </button>
-        `;
-      }).join('');
+    function syncCountryDropdown() {
+      const sel = document.getElementById('countrySelect');
+      if (sel) {
+        sel.value = currentCountryKey;
+      }
     }
 
     function applyLocalizationUI(c) {
@@ -1225,7 +1229,7 @@ Loading receipt stream...
     function setCountryMarket(countryCode) {
       currentCountryKey = countryCode;
       const c = countryCatalogs[countryCode];
-      renderCountryRibbon();
+      syncCountryDropdown();
       applyLocalizationUI(c);
 
       document.getElementById('terminalTitle').textContent = `bengkelstack-pos:8089 (${c.name} Market Fleet)`;
