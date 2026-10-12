@@ -205,7 +205,7 @@
               
               <!-- 1. Vehicle Selection -->
               <div>
-                <label class="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-2 font-medium">
+                <label id="lblStep1" class="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-2 font-medium">
                   1. Select Customer Vehicle Category
                 </label>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="vehButtonGrid">
@@ -215,7 +215,7 @@
 
               <!-- 2. Fast Catalog Injector Buttons -->
               <div>
-                <label class="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-2 font-medium">
+                <label id="lblStep2" class="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-2 font-medium">
                   2. Quick Add Catalog Items
                 </label>
                 <div class="flex flex-wrap gap-2 text-xs" id="quickAddButtonGrid">
@@ -226,7 +226,7 @@
               <!-- 3. Work Order Items Table -->
               <div class="rounded-xl bg-surface border border-[rgba(255,255,255,0.06)] overflow-hidden">
                 <div class="p-3 bg-surface-hover border-b border-[rgba(255,255,255,0.06)] flex justify-between items-center text-xs">
-                  <span class="font-semibold text-slate-200">Active Work Order Cart</span>
+                  <span id="lblCartTitle" class="font-semibold text-slate-200">Active Work Order Cart</span>
                   <span id="demoItemCount" class="font-mono text-slate-400">3 Items</span>
                 </div>
                 <div class="divide-y divide-[rgba(255,255,255,0.06)] text-xs" id="demoCartList">
@@ -237,11 +237,11 @@
               <!-- 4. Grand Total & Action Bar -->
               <div class="flex items-center justify-between p-4 rounded-xl bg-surface border border-[rgba(255,255,255,0.08)]">
                 <div>
-                  <div class="text-[10px] font-mono uppercase text-slate-400">Deterministic Grand Total</div>
+                  <div id="lblGrandTotal" class="text-[10px] font-mono uppercase text-slate-400">Deterministic Grand Total</div>
                   <div class="text-2xl font-bold font-mono text-sky-400 mt-0.5" id="demoGrandTotal">$0.00</div>
                 </div>
                 <div class="flex gap-2">
-                  <button onclick="resetDemoCart()" class="px-3 py-2 text-xs rounded-lg border border-[rgba(255,255,255,0.1)] text-slate-400 hover:text-white transition-colors">
+                  <button onclick="resetDemoCart()" id="btnResetCart" class="px-3 py-2 text-xs rounded-lg border border-[rgba(255,255,255,0.1)] text-slate-400 hover:text-white transition-colors">
                     Reset
                   </button>
                   <button onclick="simulateCheckout()" id="btnDemoCheckout" class="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition-all shadow-md shadow-emerald-500/20">
@@ -256,7 +256,7 @@
             <div class="lg:col-span-5 p-6 bg-[#040506] flex flex-col justify-between">
               <div>
                 <div class="flex items-center justify-between pb-3 mb-4 border-b border-[rgba(255,255,255,0.06)]">
-                  <span class="text-xs font-mono text-slate-400 uppercase tracking-wider font-semibold">Thermal Printer Preview</span>
+                  <span id="lblThermalTitle" class="text-xs font-mono text-slate-400 uppercase tracking-wider font-semibold">Thermal Printer Preview</span>
                   <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.04] text-slate-400">ESC/POS 40-Col</span>
                 </div>
                 <!-- Paper slip -->
@@ -653,11 +653,43 @@ Loading receipt stream...
     const countryCatalogs = {
       ID: {
         code: "ID",
+        locale: "id-ID",
+        currencySymbolAfter: false,
         name: "Indonesia",
         flag: "🇮🇩",
         currency: "Rp",
         currencyCode: "IDR",
         decimalPlaces: 0,
+        i18n: {
+          step1: "1. Pilih Kategori Kendaraan Pelanggan",
+          step2: "2. Tambah Cepat Suku Cadang & Jasa",
+          cartTitle: "Keranjang Surat Perintah Kerja (SPK)",
+          itemCountSuffix: "Item",
+          takeaway: "Beli / Bawa Pulang",
+          installed: "Pasang di Bengkel",
+          partLabel: "Part",
+          laborLabel: "Ongkos",
+          grandTotal: "Total Tagihan Deterministik",
+          resetBtn: "Kosongkan",
+          checkoutBtn: "Simulasi Bayar & Cetak Nota",
+          checkoutDone: "✓ Transaksi Selesai & Dicetak!",
+          thermalTitle: "Pratinjau Struk Kasir Termal",
+          emptyCart: "Keranjang kosong. Klik '+ Tambah Cepat' di atas untuk menghitung estimasi.",
+          receiptNo: "No. Nota:",
+          dateTime: "Waktu:",
+          plateNo: "Plat Motor:",
+          customer: "Pelanggan:",
+          paymentMethod: "Metode:",
+          paymentCash: "TUNAI (CASH)",
+          itemActionHeader: "ITEM (AKSI)",
+          subtotalHeader: "SUBTOTAL",
+          totalAmount: "TOTAL BAYAR:",
+          cashTendered: "TUNAI DITERIMA:",
+          changeDue: "UANG KEMBALIAN:",
+          thankYou: "Terima kasih atas kunjungan Anda!",
+          installTag: "PASANG",
+          retailTag: "RETAIL"
+        },
         workshopName: "BENGKEL MOTOR JAYA ABADI",
         receiptHeader: "LAYANAN SERVIS & SUKU CADANG",
         receiptFooter: "Garansi Servis 7 Hari / 500 KM",
@@ -669,9 +701,9 @@ Loading receipt stream...
         },
         items: {
           oil: { code: "OIL-MPX2", name: "Engine Oil AHM MPX2 (0.8L)", price: 48000, installFees: { beat: 5000, vario: 5000, nmax: 10000, pcx: 10000 } },
-          pad: { code: "BRK-PAD-F", name: "Front Disc Brake Pad OEM", price: 55000, installFees: { beat: 10000, vario: 15000, nmax: 20000, pcx: 20000 } },
-          belt: { code: "DRV-BELT", name: "CVT Drive Belt OEM Spec", price: 135000, installFees: { beat: 25000, vario: 35000, nmax: 50000, pcx: 55000 } },
-          tuneup: { code: "SVC-TUNE", name: "Routine Tune-Up & Throttle Clean", price: 0, installFees: { beat: 45000, vario: 55000, nmax: 75000, pcx: 80000 } }
+          pad: { code: "BRK-PAD-F", name: "Kampas Rem Depan Genuine", price: 55000, installFees: { beat: 10000, vario: 15000, nmax: 20000, pcx: 20000 } },
+          belt: { code: "DRV-BELT", name: "V-Belt CVT OEM Replacement", price: 135000, installFees: { beat: 25000, vario: 35000, nmax: 50000, pcx: 55000 } },
+          tuneup: { code: "SVC-TUNE", name: "Servis Rutin & Pembersihan CVT", price: 0, installFees: { beat: 45000, vario: 55000, nmax: 75000, pcx: 80000 } }
         },
         defaultCart: [
           { id: 'oil', action: 'installed' },
@@ -681,19 +713,51 @@ Loading receipt stream...
       },
       VN: {
         code: "VN",
+        locale: "vi-VN",
+        currencySymbolAfter: true,
         name: "Vietnam",
         flag: "🇻🇳",
         currency: "₫",
         currencyCode: "VND",
         decimalPlaces: 0,
+        i18n: {
+          step1: "1. Chọn dòng xe máy của khách hàng",
+          step2: "2. Thêm nhanh phụ tùng & tiền công",
+          cartTitle: "Giỏ hàng lệnh sửa chữa (LSC)",
+          itemCountSuffix: "Mục",
+          takeaway: "Mang về",
+          installed: "Lắp tại tiệm",
+          partLabel: "Phụ tùng",
+          laborLabel: "Tiền công",
+          grandTotal: "Tổng thanh toán chuẩn xác",
+          resetBtn: "Xóa giỏ",
+          checkoutBtn: "Thanh toán & In hóa đơn",
+          checkoutDone: "✓ Đã thanh toán & In phiếu!",
+          thermalTitle: "Xem trước hóa đơn in nhiệt",
+          emptyCart: "Giỏ hàng trống. Nhấp '+ Thêm nhanh' ở trên để tính giá.",
+          receiptNo: "Số phiếu:",
+          dateTime: "Thời gian:",
+          plateNo: "Biển số xe:",
+          customer: "Khách hàng:",
+          paymentMethod: "Phương thức:",
+          paymentCash: "TIEN MAT (CASH)",
+          itemActionHeader: "PHỤ TÙNG (THAO TÁC)",
+          subtotalHeader: "THÀNH TIỀN",
+          totalAmount: "TỔNG CỘNG:",
+          cashTendered: "TIỀN KHÁCH ĐƯA:",
+          changeDue: "TIỀN THỐI LẠI:",
+          thankYou: "Cảm ơn quý khách đã tin tưởng!",
+          installTag: "LẮP RÁP",
+          retailTag: "MUA VỀ"
+        },
         workshopName: "TIEM SUA XE MAY SAI GON",
         receiptHeader: "DICH VU SUA CHUA & PHU TUNG",
         receiptFooter: "Bao Hanh 7 Ngay / 500 KM",
         vehicles: {
-          wave: { name: "Honda Wave Alpha", type: "Underbone Commuter 110cc", plate: "29-A1 123.45", owner: "Nguyen Van Minh" },
-          lead: { name: "Honda Lead 125", type: "City Scooter 125cc", plate: "59-B1 678.90", owner: "Tran Thi Hoa" },
-          airblade: { name: "Honda Air Blade 160", type: "Sport Scooter 160cc", plate: "43-C1 999.88", owner: "Le Hoang Nam" },
-          exciter: { name: "Yamaha Exciter 155", type: "Manual Clutch 155cc", plate: "72-D1 555.22", owner: "Pham Duc Anh" }
+          wave: { name: "Honda Wave Alpha", type: "Xe so pho thong 110cc", plate: "29-A1 123.45", owner: "Nguyen Van Minh" },
+          lead: { name: "Honda Lead 125", type: "Xe tay ga do thi 125cc", plate: "59-B1 678.90", owner: "Tran Thi Hoa" },
+          airblade: { name: "Honda Air Blade 160", type: "Xe tay ga the thao 160cc", plate: "43-C1 999.88", owner: "Le Hoang Nam" },
+          exciter: { name: "Yamaha Exciter 155", type: "Xe con tay 155cc", plate: "72-D1 555.22", owner: "Pham Duc Anh" }
         },
         items: {
           oil: { code: "OIL-CASTROL", name: "Dau Nhot Castrol Power1 0.8L", price: 115000, installFees: { wave: 15000, lead: 20000, airblade: 25000, exciter: 25000 } },
@@ -709,11 +773,43 @@ Loading receipt stream...
       },
       TH: {
         code: "TH",
+        locale: "th-TH",
+        currencySymbolAfter: false,
         name: "Thailand",
         flag: "🇹🇭",
         currency: "฿",
         currencyCode: "THB",
         decimalPlaces: 0,
+        i18n: {
+          step1: "1. เลือกรุ่นรถจักรยานยนต์ของลูกค้า",
+          step2: "2. เพิ่มอะไหล่และค่าแรงด่วน",
+          cartTitle: "รายการใบสั่งซ่อม (Work Order)",
+          itemCountSuffix: "รายการ",
+          takeaway: "ซื้อกลับ",
+          installed: "ติดตั้งที่ร้าน",
+          partLabel: "อะไหล่",
+          laborLabel: "ค่าแรง",
+          grandTotal: "ยอดรวมสุทธิที่คำนวณได้",
+          resetBtn: "รีเซ็ต",
+          checkoutBtn: "ชำระเงินและพิมพ์ใบเสร็จ",
+          checkoutDone: "✓ ชำระเงินและพิมพ์เรียบร้อย!",
+          thermalTitle: "ตัวอย่างใบเสร็จพิมพ์ความร้อน",
+          emptyCart: "ตะกร้าว่างเปล่า กด '+ เพิ่มด่วน' ด้านบนเพื่อคำนวณราคา",
+          receiptNo: "เลขที่ใบเสร็จ:",
+          dateTime: "วันเวลา:",
+          plateNo: "ทะเบียนรถ:",
+          customer: "ลูกค้า:",
+          paymentMethod: "วิธีชำระ:",
+          paymentCash: "เงินสด (CASH)",
+          itemActionHeader: "รายการ (การบริการ)",
+          subtotalHeader: "รวมเงิน",
+          totalAmount: "ยอดรวมทั้งหมด:",
+          cashTendered: "รับเงินสด:",
+          changeDue: "เงินทอน:",
+          thankYou: "ขอบคุณที่ใช้บริการ!",
+          installTag: "ติดตั้ง",
+          retailTag: "ซื้อกลับ"
+        },
         workshopName: "BANGKOK MOTO SERVICE",
         receiptHeader: "REPAIR & GENUINE PARTS",
         receiptFooter: "Warranty 7 Days / 500 KM",
@@ -737,11 +833,43 @@ Loading receipt stream...
       },
       PH: {
         code: "PH",
+        locale: "en-PH",
+        currencySymbolAfter: false,
         name: "Philippines",
         flag: "🇵🇭",
         currency: "₱",
         currencyCode: "PHP",
         decimalPlaces: 2,
+        i18n: {
+          step1: "1. Piliin ang Modelo ng Motorsiklo",
+          step2: "2. Mabilisang Pagdagdag ng Parte at Serbisyo",
+          cartTitle: "Listahan ng Trabaho (Job Order)",
+          itemCountSuffix: "Aytem",
+          takeaway: "Bili Lang / Iuwi",
+          installed: "Ipakabit sa Talyer",
+          partLabel: "Parte",
+          laborLabel: "Kabayaran",
+          grandTotal: "Kabuuang Halaga ng Singil",
+          resetBtn: "I-reset",
+          checkoutBtn: "Magbayad at Mag-print ng Resibo",
+          checkoutDone: "✓ Bayad Na & Naka-print!",
+          thermalTitle: "Preview ng Resibo sa Thermal Printer",
+          emptyCart: "Walang laman ang cart. Pindutin ang '+ Mabilisang Pagdagdag' sa itaas.",
+          receiptNo: "Resibo Blg:",
+          dateTime: "Petsa/Oras:",
+          plateNo: "Plaka ng Motor:",
+          customer: "Kostumer:",
+          paymentMethod: "Paraan:",
+          paymentCash: "CASH TENDER",
+          itemActionHeader: "PARTE (AKSIYON)",
+          subtotalHeader: "SUBTOTAL",
+          totalAmount: "KABUUANG SINGIL:",
+          cashTendered: "BAYAD NA PERA:",
+          changeDue: "SUKLI:",
+          thankYou: "Salamat sa inyong pagbisita!",
+          installTag: "IKABIT",
+          retailTag: "IUWI"
+        },
         workshopName: "MANILA MOTORCYCLE CLINIC",
         receiptHeader: "REPAIR SERVICE & MOTOR PARTS",
         receiptFooter: "Service Warranty 7 Days / 500 KM",
@@ -765,11 +893,43 @@ Loading receipt stream...
       },
       MY: {
         code: "MY",
+        locale: "ms-MY",
+        currencySymbolAfter: false,
         name: "Malaysia",
         flag: "🇲🇾",
         currency: "RM",
         currencyCode: "MYR",
         decimalPlaces: 2,
+        i18n: {
+          step1: "1. Pilih Model Motosikal Pelanggan",
+          step2: "2. Tambah Pantas Alat Ganti & Upah",
+          cartTitle: "Troli Pesanan Kerja Bengkel (SPK)",
+          itemCountSuffix: "Item",
+          takeaway: "Bawa Balik",
+          installed: "Pasang di Bengkel",
+          partLabel: "Alat Ganti",
+          laborLabel: "Upah Pasang",
+          grandTotal: "Jumlah Keseluruhan Bersih",
+          resetBtn: "Kosongkan",
+          checkoutBtn: "Simulasi Bayar & Cetak Resit",
+          checkoutDone: "✓ Pembayaran Berjaya & Dicetak!",
+          thermalTitle: "Pratonton Resit Cetakan Haba",
+          emptyCart: "Troli kosong. Sila klik '+ Tambah Pantas' di atas.",
+          receiptNo: "No. Resit:",
+          dateTime: "Tarikh/Masa:",
+          plateNo: "No. Pendaftaran:",
+          customer: "Pelanggan:",
+          paymentMethod: "Kaedah:",
+          paymentCash: "TUNAI (CASH)",
+          itemActionHeader: "ITEM (TINDAKAN)",
+          subtotalHeader: "SUBTOTAL",
+          totalAmount: "JUMLAH BAYARAN:",
+          cashTendered: "TUNAI DITERIMA:",
+          changeDue: "BAKI WANG:",
+          thankYou: "Terima kasih atas sokongan anda!",
+          installTag: "PASANG",
+          retailTag: "RETAIL"
+        },
         workshopName: "BENGKEL MOTOR KUALA LUMPUR",
         receiptHeader: "SERVIS MOTOR & ALAT GANTI",
         receiptFooter: "Jaminan Servis 7 Hari / 500 KM",
@@ -793,11 +953,43 @@ Loading receipt stream...
       },
       IN: {
         code: "IN",
+        locale: "en-IN",
+        currencySymbolAfter: false,
         name: "India",
         flag: "🇮🇳",
         currency: "₹",
         currencyCode: "INR",
         decimalPlaces: 0,
+        i18n: {
+          step1: "1. ग्राहक की बाइक का मॉडल चुनें (Select Bike)",
+          step2: "2. स्पेयर पार्ट्स और लेबर जोड़ें (Add Items)",
+          cartTitle: "सक्रिय जॉब कार्ड (Active Job Card)",
+          itemCountSuffix: "आइटम",
+          takeaway: "काउंटर से खरीदें (Retail)",
+          installed: "वर्कशॉप में लगाएं (Fitted)",
+          partLabel: "पार्ट्स",
+          laborLabel: "मजदूरी",
+          grandTotal: "कुल बिल राशि (Grand Total)",
+          resetBtn: "रीसेट करें",
+          checkoutBtn: "बिल भुगतान और रसीद प्रिंट करें",
+          checkoutDone: "✓ भुगतान सफल & बिल प्रिंट!",
+          thermalTitle: "थर्मल बिल रसीद पूर्वावलोकन",
+          emptyCart: "जॉब कार्ड खाली है। पार्ट्स जोड़ने के लिए ऊपर क्लिक करें।",
+          receiptNo: "बिल संख्या (Invoice):",
+          dateTime: "दिनांक/समय:",
+          plateNo: "गाड़ी नंबर (Reg No):",
+          customer: "ग्राहक का नाम:",
+          paymentMethod: "भुगतान प्रकार:",
+          paymentCash: "नकद (CASH)",
+          itemActionHeader: "पार्ट्स / कार्य विवरण",
+          subtotalHeader: "कुल योग",
+          totalAmount: "कुल देय राशि:",
+          cashTendered: "नकद प्राप्त:",
+          changeDue: "वापसी राशि:",
+          thankYou: "हमारी सेवा चुनने के लिए धन्यवाद!",
+          installTag: "FITTED",
+          retailTag: "RETAIL"
+        },
         workshopName: "MUMBAI TWO-WHEELER SERVICE",
         receiptHeader: "BIKE REPAIR & SPARE PARTS",
         receiptFooter: "Service Warranty 7 Days / 500 KM",
@@ -821,11 +1013,43 @@ Loading receipt stream...
       },
       US: {
         code: "US",
+        locale: "en-US",
+        currencySymbolAfter: false,
         name: "United States",
         flag: "🇺🇸",
         currency: "$",
         currencyCode: "USD",
         decimalPlaces: 2,
+        i18n: {
+          step1: "1. Select Customer Vehicle Category",
+          step2: "2. Quick Add Catalog Items",
+          cartTitle: "Active Work Order Cart",
+          itemCountSuffix: "Items",
+          takeaway: "Takeaway",
+          installed: "Installed",
+          partLabel: "Part",
+          laborLabel: "Labor",
+          grandTotal: "Deterministic Grand Total",
+          resetBtn: "Reset",
+          checkoutBtn: "Simulate Checkout & Pay",
+          checkoutDone: "✓ Order Settled & Printed!",
+          thermalTitle: "Thermal Printer Preview",
+          emptyCart: "Cart is empty. Click '+ Quick Add Catalog Items' above to test pricing.",
+          receiptNo: "Receipt No:",
+          dateTime: "Date/Time:",
+          plateNo: "Plate No:",
+          customer: "Customer:",
+          paymentMethod: "Payment Method:",
+          paymentCash: "CASH TENDER",
+          itemActionHeader: "ITEM (ACTION)",
+          subtotalHeader: "SUBTOTAL",
+          totalAmount: "TOTAL AMOUNT:",
+          cashTendered: "CASH TENDERED:",
+          changeDue: "CHANGE DUE:",
+          thankYou: "Thank you for your visit!",
+          installTag: "INSTALL",
+          retailTag: "RETAIL"
+        },
         workshopName: "AUSTIN MOTO GARAGE",
         receiptHeader: "PREMIUM MOTORCYCLE REPAIR",
         receiptFooter: "30 Days / 500 Miles Warranty",
@@ -849,11 +1073,43 @@ Loading receipt stream...
       },
       GB: {
         code: "GB",
+        locale: "en-GB",
+        currencySymbolAfter: false,
         name: "United Kingdom",
         flag: "🇬🇧",
         currency: "£",
         currencyCode: "GBP",
         decimalPlaces: 2,
+        i18n: {
+          step1: "1. Select Customer Vehicle Category",
+          step2: "2. Quick Add Parts & Workshop Labour",
+          cartTitle: "Active Job Card / Work Order Cart",
+          itemCountSuffix: "Items",
+          takeaway: "Over-the-Counter",
+          installed: "Fitted in Bay",
+          partLabel: "Part",
+          laborLabel: "Labour",
+          grandTotal: "Deterministic Invoice Total",
+          resetBtn: "Clear",
+          checkoutBtn: "Settle Payment & Print Slip",
+          checkoutDone: "✓ Invoice Settled & Printed!",
+          thermalTitle: "Thermal Till Receipt Preview",
+          emptyCart: "Job card is empty. Select items above to calculate workshop estimate.",
+          receiptNo: "Invoice No:",
+          dateTime: "Date/Time:",
+          plateNo: "VRM / Plate:",
+          customer: "Customer:",
+          paymentMethod: "Payment Method:",
+          paymentCash: "CASH TENDER",
+          itemActionHeader: "PART / LABOUR",
+          subtotalHeader: "SUBTOTAL",
+          totalAmount: "TOTAL INVOICE:",
+          cashTendered: "CASH TENDERED:",
+          changeDue: "CHANGE DUE:",
+          thankYou: "Thank you for your custom!",
+          installTag: "FITTED",
+          retailTag: "RETAIL"
+        },
         workshopName: "LONDON MOTORCYCLE WORKS",
         receiptHeader: "MOT & SERVICE WORKSHOP",
         receiptFooter: "30 Days Workshop Guarantee",
@@ -883,15 +1139,24 @@ Loading receipt stream...
 
     function formatCurrency(val) {
       const c = countryCatalogs[currentCountryKey];
-      if (c.decimalPlaces === 0) {
-        return c.currency + " " + Math.round(val).toLocaleString();
-      } else {
-        return c.currency + val.toFixed(c.decimalPlaces);
+      const num = Number(val || 0);
+      try {
+        const formatted = new Intl.NumberFormat(c.locale || 'en-US', {
+          minimumFractionDigits: c.decimalPlaces,
+          maximumFractionDigits: c.decimalPlaces
+        }).format(num);
+        if (c.currencySymbolAfter) {
+          return formatted + " " + c.currency;
+        }
+        return (c.currency ? c.currency + (c.currency.length > 1 ? " " : "") : "") + formatted;
+      } catch (e) {
+        return c.currency + " " + num;
       }
     }
 
     function renderCountryRibbon() {
       const ribbon = document.getElementById('countryRibbon');
+      if (!ribbon) return;
       ribbon.innerHTML = Object.entries(countryCatalogs).map(([code, c]) => {
         const isActive = code === currentCountryKey;
         const activeClass = isActive 
@@ -907,10 +1172,35 @@ Loading receipt stream...
       }).join('');
     }
 
+    function applyLocalizationUI(c) {
+      const t = c.i18n;
+      const elStep1 = document.getElementById('lblStep1');
+      if (elStep1) elStep1.textContent = t.step1;
+
+      const elStep2 = document.getElementById('lblStep2');
+      if (elStep2) elStep2.textContent = t.step2;
+
+      const elCartTitle = document.getElementById('lblCartTitle');
+      if (elCartTitle) elCartTitle.textContent = t.cartTitle;
+
+      const elGrandTotal = document.getElementById('lblGrandTotal');
+      if (elGrandTotal) elGrandTotal.textContent = t.grandTotal;
+
+      const elResetBtn = document.getElementById('btnResetCart');
+      if (elResetBtn) elResetBtn.textContent = t.resetBtn;
+
+      const elCheckoutBtn = document.getElementById('btnDemoCheckout');
+      if (elCheckoutBtn) elCheckoutBtn.textContent = t.checkoutBtn;
+
+      const elThermalTitle = document.getElementById('lblThermalTitle');
+      if (elThermalTitle) elThermalTitle.textContent = t.thermalTitle;
+    }
+
     function setCountryMarket(countryCode) {
       currentCountryKey = countryCode;
       const c = countryCatalogs[countryCode];
       renderCountryRibbon();
+      applyLocalizationUI(c);
 
       document.getElementById('terminalTitle').textContent = `bengkelstack-pos:8089 (${c.name} Market Fleet)`;
 
@@ -986,15 +1276,16 @@ Loading receipt stream...
     function renderDemoCart() {
       const container = document.getElementById('demoCartList');
       const c = countryCatalogs[currentCountryKey];
+      const t = c.i18n;
       const veh = c.vehicles[currentVehKey] || Object.values(c.vehicles)[0];
       let grandTotal = 0;
 
-      document.getElementById('demoItemCount').textContent = `${demoCart.length} Items`;
+      document.getElementById('demoItemCount').textContent = `${demoCart.length} ${t.itemCountSuffix}`;
 
       if (demoCart.length === 0) {
         container.innerHTML = `
           <div class="p-8 text-center text-slate-500 text-xs">
-            Cart is empty. Click "+ Quick Add Catalog Items" above to test pricing.
+            ${t.emptyCart}
           </div>
         `;
         document.getElementById('demoGrandTotal').textContent = formatCurrency(0);
@@ -1029,18 +1320,18 @@ Loading receipt stream...
             <div class="text-[10px] font-mono text-slate-500 flex items-center gap-2 mt-0.5">
               <span>${item.code}</span>
               <span>•</span>
-              <span>Part: ${formatCurrency(item.price)}</span>
-              ${item.isInstalled ? `<span class="text-sky-400 font-medium">• Labor (${veh.name}): +${formatCurrency(item.laborFee)}</span>` : ''}
+              <span>${t.partLabel}: ${formatCurrency(item.price)}</span>
+              ${item.isInstalled ? `<span class="text-sky-400 font-medium">• ${t.laborLabel} (${veh.name}): +${formatCurrency(item.laborFee)}</span>` : ''}
             </div>
           </div>
 
           <!-- Takeaway vs Installed Switcher -->
           <div class="inline-flex rounded-lg bg-canvas p-0.5 border border-[rgba(255,255,255,0.1)]">
             <button onclick="toggleDemoAction(${item.idx}, 'takeaway')" class="px-2.5 py-1 rounded text-[10px] font-bold transition-all ${!item.isInstalled ? 'bg-amber-400 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'}">
-              Takeaway
+              ${t.takeaway}
             </button>
             <button onclick="toggleDemoAction(${item.idx}, 'installed')" class="px-2.5 py-1 rounded text-[10px] font-bold transition-all ${item.isInstalled ? 'bg-sky-400 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'}">
-              Installed
+              ${t.installed}
             </button>
           </div>
 
@@ -1058,38 +1349,44 @@ Loading receipt stream...
 
     function renderThermalSlip(items, total) {
       const c = countryCatalogs[currentCountryKey];
+      const t = c.i18n;
       const veh = c.vehicles[currentVehKey] || Object.values(c.vehicles)[0];
       const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
       let lines = [];
       lines.push("========================================");
-      lines.push(padLine("       " + c.workshopName.substring(0, 26), ""));
-      lines.push(padLine("       " + c.receiptHeader.substring(0, 26), ""));
+      const centerLine = (str) => {
+        const s = String(str || '').substring(0, 40);
+        const pad = Math.max(0, Math.floor((40 - s.length) / 2));
+        return ' '.repeat(pad) + s;
+      };
+      lines.push(centerLine(c.workshopName));
+      lines.push(centerLine(c.receiptHeader));
       lines.push("========================================");
-      lines.push(padLine("Receipt No:", "WO-00042"));
-      lines.push(padLine("Date/Time:", now));
-      lines.push(padLine("Plate No:", `${veh.plate} (${veh.name})`));
-      lines.push(padLine("Customer:", veh.owner));
-      lines.push(padLine("Method:", "CASH TENDER"));
+      lines.push(padLine(t.receiptNo, "WO-00042"));
+      lines.push(padLine(t.dateTime, now));
+      lines.push(padLine(t.plateNo, `${veh.plate} (${veh.name})`));
+      lines.push(padLine(t.customer, veh.owner));
+      lines.push(padLine(t.paymentMethod, t.paymentCash));
       lines.push("----------------------------------------");
-      lines.push(padLine("ITEM (ACTION)", "SUBTOTAL"));
+      lines.push(padLine(t.itemActionHeader, t.subtotalHeader));
       lines.push("----------------------------------------");
 
       items.forEach(it => {
-        const actLabel = it.isInstalled ? "INSTALL" : "RETAIL";
-        lines.push(padLine(`${it.name.substring(0, 20)} [${actLabel}]`, formatCurrency(it.subtotal)));
+        const actLabel = it.isInstalled ? t.installTag : t.retailTag;
+        lines.push(padLine(`${it.name.substring(0, 18)} [${actLabel}]`, formatCurrency(it.subtotal)));
         if (it.isInstalled && it.laborFee > 0) {
-          lines.push(padLine(`  Part: ${formatCurrency(it.price)}`, `Labor: ${formatCurrency(it.laborFee)}`));
+          lines.push(padLine(`  ${t.partLabel}: ${formatCurrency(it.price)}`, `${t.laborLabel}: ${formatCurrency(it.laborFee)}`));
         }
       });
 
       lines.push("----------------------------------------");
-      lines.push(padLine("TOTAL AMOUNT:", formatCurrency(total)));
-      lines.push(padLine("CASH TENDERED:", formatCurrency(total)));
-      lines.push(padLine("CHANGE DUE:", formatCurrency(0)));
+      lines.push(padLine(t.totalAmount, formatCurrency(total)));
+      lines.push(padLine(t.cashTendered, formatCurrency(total)));
+      lines.push(padLine(t.changeDue, formatCurrency(0)));
       lines.push("========================================");
-      lines.push(padLine("       Thank you for your visit!", ""));
-      lines.push(padLine("    " + c.receiptFooter.substring(0, 32), ""));
+      lines.push(centerLine(t.thankYou));
+      lines.push(centerLine(c.receiptFooter));
       lines.push("========================================");
 
       document.getElementById('demoThermalSlip').textContent = lines.join("\n");
@@ -1097,10 +1394,11 @@ Loading receipt stream...
 
     function simulateCheckout() {
       const btn = document.getElementById('btnDemoCheckout');
-      btn.textContent = "✓ Order Settled & Printed!";
+      const c = countryCatalogs[currentCountryKey];
+      btn.textContent = c.i18n.checkoutDone;
       btn.className = "px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-400 text-slate-950 transition-all";
       setTimeout(() => {
-        btn.textContent = "Simulate Checkout & Pay";
+        btn.textContent = c.i18n.checkoutBtn;
         btn.className = "px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition-all shadow-md shadow-emerald-500/20";
       }, 2500);
     }

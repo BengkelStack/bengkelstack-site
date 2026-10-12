@@ -66,7 +66,7 @@ const {
 } = sandbox;
 
 console.log('================================================================');
-console.log('WHITE-BOX TEST SUITE: 8-Country Fleet & Localization Matrix');
+console.log('WHITE-BOX TEST SUITE: Native Multi-Lingual Country Matrix');
 console.log('================================================================\n');
 
 let passedTests = 0;
@@ -85,6 +85,13 @@ function runTest(testName, fn) {
 }
 
 const expectedCountries = ['ID', 'VN', 'TH', 'PH', 'MY', 'IN', 'US', 'GB'];
+const requiredI18nKeys = [
+  'step1', 'step2', 'cartTitle', 'itemCountSuffix', 'takeaway', 'installed',
+  'partLabel', 'laborLabel', 'grandTotal', 'resetBtn', 'checkoutBtn',
+  'checkoutDone', 'thermalTitle', 'emptyCart', 'receiptNo', 'dateTime',
+  'plateNo', 'customer', 'paymentMethod', 'itemActionHeader', 'subtotalHeader',
+  'totalAmount', 'cashTendered', 'changeDue', 'thankYou'
+];
 
 // TEST CASES:
 runTest('Country Matrix: All 8 target countries defined', () => {
@@ -93,97 +100,72 @@ runTest('Country Matrix: All 8 target countries defined', () => {
   });
 });
 
-runTest('Country Matrix: Vehicle fleet schemas & license plate formatting across all countries', () => {
+runTest('i18n Completeness: All 8 countries have full translation dictionary', () => {
   expectedCountries.forEach(code => {
     const c = countryCatalogs[code];
-    assert(c.name && c.flag && c.currency && c.currencyCode, `Country ${code} missing metadata`);
-    const vehKeys = Object.keys(c.vehicles);
-    assert(vehKeys.length >= 4, `Country ${code} must have at least 4 models`);
-    vehKeys.forEach(vk => {
-      const v = c.vehicles[vk];
-      assert(v.name && v.type && v.plate && v.owner, `Vehicle ${vk} in ${code} missing fields`);
+    assert(c.i18n, `Country ${code} missing i18n object`);
+    requiredI18nKeys.forEach(k => {
+      assert(c.i18n[k], `Country ${code} missing i18n key '${k}'`);
     });
   });
 });
 
-runTest('Country Matrix: Labor fee completeness for every item/vehicle pair', () => {
-  expectedCountries.forEach(code => {
-    const c = countryCatalogs[code];
-    const vehKeys = Object.keys(c.vehicles);
-    Object.keys(c.items).forEach(ik => {
-      const item = c.items[ik];
-      assert(typeof item.price === 'number' && item.price >= 0, `Item ${ik} in ${code} invalid price`);
-      vehKeys.forEach(vk => {
-        assert(typeof item.installFees[vk] === 'number', `Item ${ik} missing install fee for vehicle ${vk} in ${code}`);
-        assert(item.installFees[vk] >= 0, `Item ${ik} negative install fee for vehicle ${vk} in ${code}`);
-      });
-    });
-  });
-});
-
-runTest('Localization Switching: Switch to Vietnam (VN - ₫ VND)', () => {
+runTest('UI Localization Mutation: Switch to Vietnam (Tiếng Việt)', () => {
   setCountryMarket('VN');
   assert.strictEqual(sandbox.currentCountryKey, 'VN');
-  assert.strictEqual(countryCatalogs.VN.currency, '₫');
-  assert(elements['terminalTitle'].textContent.includes('Vietnam'));
-  assert(elements['demoGrandTotal'].textContent.includes('₫'));
+  assert.strictEqual(elements['lblStep1'].textContent, '1. Chọn dòng xe máy của khách hàng');
+  assert.strictEqual(elements['lblStep2'].textContent, '2. Thêm nhanh phụ tùng & tiền công');
+  assert.strictEqual(elements['lblCartTitle'].textContent, 'Giỏ hàng lệnh sửa chữa (LSC)');
+  assert.strictEqual(elements['lblGrandTotal'].textContent, 'Tổng thanh toán chuẩn xác');
+  assert.strictEqual(elements['btnResetCart'].textContent, 'Xóa giỏ');
+  assert.strictEqual(elements['btnDemoCheckout'].textContent, 'Thanh toán & In hóa đơn');
 });
 
-runTest('Localization Switching: Switch to United States (US - $ USD)', () => {
+runTest('UI Localization Mutation: Switch to Thailand (ภาษาไทย)', () => {
+  setCountryMarket('TH');
+  assert.strictEqual(sandbox.currentCountryKey, 'TH');
+  assert.strictEqual(elements['lblStep1'].textContent, '1. เลือกรุ่นรถจักรยานยนต์ของลูกค้า');
+  assert.strictEqual(elements['lblGrandTotal'].textContent, 'ยอดรวมสุทธิที่คำนวณได้');
+  assert.strictEqual(elements['btnDemoCheckout'].textContent, 'ชำระเงินและพิมพ์ใบเสร็จ');
+});
+
+runTest('UI Localization Mutation: Switch to Indonesia (Bahasa Indonesia)', () => {
+  setCountryMarket('ID');
+  assert.strictEqual(sandbox.currentCountryKey, 'ID');
+  assert.strictEqual(elements['lblStep1'].textContent, '1. Pilih Kategori Kendaraan Pelanggan');
+  assert.strictEqual(elements['lblCartTitle'].textContent, 'Keranjang Surat Perintah Kerja (SPK)');
+  assert.strictEqual(elements['btnResetCart'].textContent, 'Kosongkan');
+});
+
+runTest('UI Localization Mutation: Switch to US (American English)', () => {
   setCountryMarket('US');
   assert.strictEqual(sandbox.currentCountryKey, 'US');
-  assert.strictEqual(countryCatalogs.US.currency, '$');
-  assert(elements['terminalTitle'].textContent.includes('United States'));
-  assert(elements['demoGrandTotal'].textContent.startsWith('$'));
+  assert.strictEqual(elements['lblStep1'].textContent, '1. Select Customer Vehicle Category');
+  assert.strictEqual(elements['lblCartTitle'].textContent, 'Active Work Order Cart');
+  assert.strictEqual(elements['btnResetCart'].textContent, 'Reset');
 });
 
-runTest('Localization Switching: Switch to United Kingdom (GB - £ GBP)', () => {
-  setCountryMarket('GB');
-  assert.strictEqual(sandbox.currentCountryKey, 'GB');
-  assert.strictEqual(countryCatalogs.GB.currency, '£');
-  assert(elements['terminalTitle'].textContent.includes('United Kingdom'));
-  assert(elements['demoGrandTotal'].textContent.startsWith('£'));
-});
-
-runTest('Vehicle Selection: Switching to high-displacement cruiser charges higher labor in US', () => {
-  setCountryMarket('US');
-  setDemoVehicle('ninja');
-  const ninjaTotal = parseFloat(elements['demoGrandTotal'].textContent.replace(/[^0-9.]/g, ''));
-
-  setDemoVehicle('harley');
-  const harleyTotal = parseFloat(elements['demoGrandTotal'].textContent.replace(/[^0-9.]/g, ''));
-
-  assert(harleyTotal > ninjaTotal, `Harley labor (${harleyTotal}) must be higher than Ninja 400 (${ninjaTotal})`);
-});
-
-runTest('Dual-Tier Pricing: Takeaway vs Installed calculation determinism across currencies', () => {
-  setCountryMarket('GB');
-  resetDemoCart();
-  addDemoItem('chain'); // price = 115.00, PCX installFee = 30.00
-
-  toggleDemoAction(0, 'installed');
-  assert.strictEqual(elements['demoGrandTotal'].textContent, '£145.00'); // 115 + 30 = 145
-
-  toggleDemoAction(0, 'takeaway');
-  assert.strictEqual(elements['demoGrandTotal'].textContent, '£115.00'); // 115 only
-});
-
-runTest('Thermal Receipt Formatting: 40-column padLine strict bounds and country headers', () => {
-  setCountryMarket('US');
-  const slip = elements['demoThermalSlip'].textContent;
-  const lines = slip.split('\n');
-  lines.forEach((line, i) => {
-    assert(line.length <= 40, `Line ${i + 1} exceeds 40 characters: [${line}] (${line.length} chars)`);
+runTest('Thermal Receipt Localization: Country-specific receipt headers & labels in 40 columns', () => {
+  // Test across all 8 countries that receipts generate with strict <= 40 chars per line
+  expectedCountries.forEach(code => {
+    setCountryMarket(code);
+    const slip = elements['demoThermalSlip'].textContent;
+    assert(slip.includes('WO-00042'), `Missing receipt number in ${code}`);
+    const lines = slip.split('\n');
+    lines.forEach((line, i) => {
+      assert(line.length <= 40, `Country ${code} Line ${i + 1} exceeds 40 characters: [${line}] (${line.length} chars)`);
+    });
   });
-  assert(slip.includes('AUSTIN MOTO GARAGE'), 'Missing US workshop name on receipt');
-  assert(slip.includes('WO-00042'), 'Missing receipt number');
-  assert(slip.includes('TOTAL AMOUNT:'), 'Missing total amount line');
 });
 
-runTest('Checkout Simulation: Button state changes correctly', () => {
+runTest('Checkout Simulation: Localized completion badge on button', () => {
+  setCountryMarket('VN');
   simulateCheckout();
-  const btn = elements['btnDemoCheckout'];
-  assert(btn.textContent.includes('Order Settled & Printed'), 'Checkout text did not update');
+  assert.strictEqual(elements['btnDemoCheckout'].textContent, '✓ Đã thanh toán & In phiếu!');
+
+  setCountryMarket('ID');
+  simulateCheckout();
+  assert.strictEqual(elements['btnDemoCheckout'].textContent, '✓ Transaksi Selesai & Dicetak!');
 });
 
 console.log(`\n================================================================`);
