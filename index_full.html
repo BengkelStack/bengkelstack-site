@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BengkelStack — Edge-First Workshop Operating System</title>
+  <meta name="description" content="Self-hosted workshop point-of-sale, dual-tier parts pricing engine, and supplier invoice OCR. 100% offline-capable on Python standard library with SQLite WAL storage.">
+
+  <!-- Inter & JetBrains Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+          },
+          colors: {
+            canvas: '#08090a',
+            panel: '#0f1011',
+            surface: '#151719',
+            'surface-hover': '#1c1e21',
+            accent: {
+              DEFAULT: '#38bdf8',
+              hover: '#0ea5e9',
+              subtle: 'rgba(56, 189, 248, 0.1)',
+            },
+            brand: '#5e6ad2',
+            emerald: {
+              DEFAULT: '#10b981',
+              subtle: 'rgba(16, 185, 129, 0.12)',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    html, body {
+      background-color: #08090a;
+      color: #f7f8f8;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-feature-settings: "cv01", "ss03";
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    .paper-thermal {
+      background-color: #060708;
+      font-family: 'JetBrains Mono', monospace;
+      border: 1px dashed rgba(255, 255, 255, 0.14);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-sky-500/25 selection:text-sky-200">
+
+  <!-- Top Sticky Header -->
+  <header class="sticky top-0 z-50 w-full border-b border-[rgba(255,255,255,0.06)] bg-[#08090a]/90 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Brand Logo -->
+      <a href="#" class="flex items-center gap-3 font-semibold text-base tracking-tight hover:opacity-90 transition-opacity">
+        <div class="w-8 h-8 rounded-lg bg-surface border border-[rgba(255,255,255,0.1)] flex items-center justify-center text-sky-400">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+          </svg>
+        </div>
+        <span class="text-white font-semibold">Bengkel<span class="text-sky-400">Stack</span></span>
+        <span class="hidden sm:inline-flex items-center px-2 py-0.5 text-[10px] font-mono rounded border border-[rgba(255,255,255,0.08)] bg-white/[0.03] text-slate-400">
+          v1.0 Core
+        </span>
+      </a>
+
+      <!-- Desktop Links -->
+      <nav class="hidden md:flex items-center gap-6 text-xs font-medium text-slate-400">
+        <a href="#interactive-pos" class="hover:text-white transition-colors">Live POS Demo</a>
+        <a href="#architecture" class="hover:text-white transition-colors">Architecture</a>
+        <a href="#benchmarks" class="hover:text-white transition-colors">Benchmarks</a>
+        <a href="#pricing" class="hover:text-white transition-colors">Pricing</a>
+        <a href="admin.html" class="hover:text-white transition-colors text-slate-300">HQ Admin</a>
+      </nav>
+
+      <!-- Header CTAs -->
+      <div class="flex items-center gap-3">
+        <a href="login.html" class="text-xs font-medium text-slate-300 hover:text-white transition-colors px-2 py-1">
+          Sign In
+        </a>
+        <a href="register.html" class="hidden sm:inline-flex items-center justify-center px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-sky-500 text-slate-950 hover:bg-sky-400 transition-all shadow-sm">
+          Register Workshop
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1">
+
+    <!-- HERO SECTION -->
+    <section class="relative pt-16 md:pt-24 pb-16 border-b border-[rgba(255,255,255,0.06)] overflow-hidden">
+      <!-- Subtle ambient lighting -->
+      <div class="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[680px] h-[340px] bg-sky-500/8 blur-[140px] rounded-full"></div>
+
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <!-- Eyebrow Badge -->
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[rgba(255,255,255,0.1)] bg-white/[0.02] text-slate-300 text-xs font-mono mb-8">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span>Zero-Dependency Python 3 • Local SQLite WAL • Global Multi-Market Ready</span>
+        </div>
+
+        <!-- Headline -->
+        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white max-w-4xl mx-auto leading-[1.15] mb-6">
+          The Edge-First Operating System for Independent Repair Centers
+        </h1>
+
+        <!-- Subtext -->
+        <p class="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed font-normal">
+          A self-hosted point-of-sale and dynamic pricing engine engineered to eliminate workshop billing leakage. Operates 100% offline with zero external pip dependencies.
+        </p>
+
+        <!-- CTA Row -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto mb-10">
+          <a href="#interactive-pos" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-lg text-xs font-semibold uppercase tracking-wider bg-sky-500 text-slate-950 hover:bg-sky-400 transition-all shadow-lg shadow-sky-500/20">
+            Open Interactive POS
+          </a>
+          <a href="https://github.com/BengkelStack/bengkelstack-core" target="_blank" rel="noopener noreferrer" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-xs font-mono font-medium bg-white/[0.03] border border-[rgba(255,255,255,0.1)] text-slate-200 hover:text-white hover:border-sky-400/50 transition-all">
+            <span>Clone Repository</span>
+            <span class="text-slate-500">&rarr;</span>
+          </a>
+        </div>
+
+        <!-- Quickstart Console Command -->
+        <div class="max-w-xl mx-auto p-2.5 sm:p-3 rounded-xl bg-panel/90 border border-[rgba(255,255,255,0.1)] flex items-center justify-between gap-3 text-left font-mono text-xs text-slate-300 shadow-2xl backdrop-blur-sm">
+          <div class="truncate flex items-center gap-2">
+            <span class="text-sky-400 select-none font-bold">$</span>
+            <span id="quickstartCmd">git clone https://github.com/BengkelStack/bengkelstack-core.git &amp;&amp; python run.py</span>
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <span class="text-[10px] text-emerald-400 font-semibold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 whitespace-nowrap hidden sm:inline-block">
+              0 pip packages
+            </span>
+            <button onclick="copyQuickstart()" id="btnCopyQuickstart" class="px-2.5 py-1 text-[11px] rounded-lg bg-surface hover:bg-surface-hover border border-[rgba(255,255,255,0.1)] text-slate-300 hover:text-white transition-all flex items-center gap-1.5" title="Copy to clipboard">
+              <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              <span id="copyQuickstartText">Copy</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: INTERACTIVE LIVE WORKSHOP POS (THE PROOF) -->
+    <section id="interactive-pos" class="py-20 border-b border-[rgba(255,255,255,0.06)] bg-panel/40">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Interactive Section Header with Compact Country Dropdown -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-[rgba(255,255,255,0.06)]">
+          <div>
+            <div class="text-xs font-mono text-sky-400 uppercase tracking-widest font-semibold mb-1">Interactive Fleet Simulator</div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              Multi-Market Workshop Fleet &amp; Dynamic Pricing
+            </h2>
+            <p class="mt-1 text-xs sm:text-sm text-slate-400">
+              Adapts vehicle models, license plate syntax, currencies, and labor matrices automatically.
+            </p>
+          </div>
+
+          <!-- Compact Sleek Country Dropdown (Eliminates Stacked Clutter) -->
+          <div class="flex items-center gap-3 self-start md:self-center flex-shrink-0">
+            <label for="countrySelect" class="text-xs font-mono text-slate-400 uppercase tracking-wider font-medium flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              <span>Market Fleet:</span>
+            </label>
+            <div class="relative">
+              <select id="countrySelect" onchange="setCountryMarket(this.value)" class="appearance-none pr-9 pl-3.5 py-2 rounded-xl bg-surface border border-[rgba(255,255,255,0.12)] text-white text-xs font-mono font-medium focus:border-sky-400 focus:outline-none transition-all cursor-pointer hover:border-white/20 shadow-md">
+                <option value="ID">🇮🇩 Indonesia (Rp IDR)</option>
+                <option value="VN">🇻🇳 Vietnam (₫ VND)</option>
+                <option value="TH">🇹🇭 Thailand (฿ THB)</option>
+                <option value="PH">🇵🇭 Philippines (₱ PHP)</option>
+                <option value="MY">🇲🇾 Malaysia (RM MYR)</option>
+                <option value="IN">🇮🇳 India (₹ INR)</option>
+                <option value="US" selected>🇺🇸 United States ($ USD)</option>
+                <option value="GB">🇬🇧 United Kingdom (£ GBP)</option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive POS Terminal Wrapper -->
+        <div class="rounded-2xl bg-panel border border-[rgba(255,255,255,0.08)] shadow-2xl overflow-hidden">
+          <!-- Terminal Header -->
+          <div class="px-5 py-3.5 bg-surface border-b border-[rgba(255,255,255,0.08)] flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="flex gap-1.5 items-center">
+                <div class="w-3 h-3 rounded-full bg-rose-500/80 shadow-sm shadow-rose-500/30"></div>
+                <div class="w-3 h-3 rounded-full bg-amber-500/80 shadow-sm shadow-amber-500/30"></div>
+                <div class="w-3 h-3 rounded-full bg-emerald-500/80 shadow-sm shadow-emerald-500/30"></div>
+              </div>
+              <div class="h-4 w-[1px] bg-[rgba(255,255,255,0.1)] mx-1 hidden sm:block"></div>
+              <span class="text-xs font-mono text-slate-300 font-medium flex items-center gap-2">
+                <svg class="w-3.5 h-3.5 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17l6-6-6-6m8 14h8"/></svg>
+                <span id="terminalTitle">bengkelstack-pos:8089 (United States Market Fleet)</span>
+              </span>
+            </div>
+            <div class="flex items-center gap-3 text-xs font-mono">
+              <span class="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-white/[0.03] border border-[rgba(255,255,255,0.06)] text-slate-400 text-[10px]">
+                HTTP 1.1 • Threading Mode
+              </span>
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[11px] font-medium">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>SQLite WAL Active</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- POS Grid (Vehicle Selector & Order Cart vs Thermal Receipt) -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-[rgba(255,255,255,0.06)]">
+            
+            <!-- Left & Middle: POS Controls & Cart (Span 7) -->
+            <div class="lg:col-span-7 p-6 space-y-6">
+              
+              <!-- 1. Vehicle Selection -->
+              <div>
+                <label id="lblStep1" class="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-2 font-medium">
+                  1. Select Customer Vehicle Category
+                </label>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="vehButtonGrid">
+                  <!-- Dynamically populated by setMarketRegion -->
+                </div>
+              </div>
+
+              <!-- 2. Fast Catalog Injector Buttons -->
+              <div>
+                <label id="lblStep2" class="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-2 font-medium">
+                  2. Quick Add Catalog Items
+                </label>
+                <div class="flex flex-wrap gap-2 text-xs" id="quickAddButtonGrid">
+                  <!-- Dynamically populated by setMarketRegion -->
+                </div>
+              </div>
+
+              <!-- 3. Work Order Items Table -->
+              <div class="rounded-xl bg-surface border border-[rgba(255,255,255,0.06)] overflow-hidden">
+                <div class="p-3 bg-surface-hover border-b border-[rgba(255,255,255,0.06)] flex justify-between items-center text-xs">
+                  <span id="lblCartTitle" class="font-semibold text-slate-200">Active Work Order Cart</span>
+                  <span id="demoItemCount" class="font-mono text-slate-400">3 Items</span>
+                </div>
+                <div class="divide-y divide-[rgba(255,255,255,0.06)] text-xs" id="demoCartList">
+                  <!-- Dynamically Rendered by JS -->
+                </div>
+              </div>
+
+              <!-- 4. Grand Total & Action Bar -->
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-4 rounded-xl bg-surface border border-[rgba(255,255,255,0.08)] gap-4">
+                <div class="flex items-center gap-6">
+                  <div>
+                    <div id="lblGrandTotal" class="text-[10px] font-mono uppercase tracking-wider text-slate-400">Deterministic Grand Total</div>
+                    <div class="text-2xl font-bold font-mono text-sky-400 mt-0.5 tracking-tight" id="demoGrandTotal">$0.00</div>
+                  </div>
+                  <div class="hidden sm:block h-8 w-[1px] bg-[rgba(255,255,255,0.08)]"></div>
+                  <div class="hidden sm:block text-[11px] font-mono text-slate-400 space-y-0.5">
+                    <div>Parts: <span id="demoPartsSubtotal" class="text-slate-200 font-semibold">$0.00</span></div>
+                    <div>Labor: <span id="demoLaborSubtotal" class="text-sky-300 font-semibold">+$0.00</span></div>
+                  </div>
+                </div>
+                <div class="flex gap-2.5 items-center justify-end">
+                  <button onclick="resetDemoCart()" id="btnResetCart" class="px-3.5 py-2 text-xs font-medium rounded-lg border border-[rgba(255,255,255,0.1)] text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all">
+                    Reset
+                  </button>
+                  <button onclick="simulateCheckout()" id="btnDemoCheckout" class="px-5 py-2 text-xs font-semibold rounded-lg bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition-all shadow-md shadow-emerald-500/20 flex items-center gap-2">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    <span>Simulate Checkout &amp; Pay</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Right: Real ESC/POS 40-Column Thermal Slip Preview (Span 5) -->
+            <div class="lg:col-span-5 p-6 bg-[#040506] flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between pb-3 mb-4 border-b border-[rgba(255,255,255,0.06)]">
+                  <span id="lblThermalTitle" class="text-xs font-mono text-slate-400 uppercase tracking-wider font-semibold">Thermal Printer Preview</span>
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.04] text-slate-400">ESC/POS 40-Col</span>
+                </div>
+                <!-- Paper slip -->
+                <pre class="paper-thermal p-5 rounded-lg text-[11px] sm:text-xs leading-relaxed text-sky-200/90 overflow-x-auto whitespace-pre custom-scroll select-all" id="demoThermalSlip">
+Loading receipt stream...
+                </pre>
+              </div>
+
+              <div class="mt-4 pt-3 border-t border-[rgba(255,255,255,0.06)] text-[11px] text-slate-500 flex justify-between items-center font-mono">
+                <span>Output: app/work_order_service.py</span>
+                <span class="text-emerald-400">✓ Formatted Exact</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 3: CORE ARCHITECTURAL PILLARS -->
+    <section id="architecture" class="py-20 border-b border-[rgba(255,255,255,0.06)]">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mb-16">
+          <div class="text-xs font-mono text-sky-400 uppercase tracking-widest font-semibold mb-2">Built for Heavy Repair Bays</div>
+          <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">
+            Engineered with Zero Runtime Dependencies
+          </h2>
+          <p class="mt-3 text-base text-slate-400 leading-relaxed">
+            Most modern POS systems crash or lag during peak repair hours when shop Wi-Fi drops. BengkelStack enforces the <b>Ponytail Standard</b>: absolute minimal code that works, native stdlib execution, and zero supply-chain vulnerabilities.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          
+          <!-- Pillar 1 -->
+          <div class="p-6 rounded-2xl bg-panel border border-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.14)] transition-all">
+            <div class="w-10 h-10 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center font-mono font-bold text-sm mb-4">
+              01
+            </div>
+            <h3 class="text-base font-semibold text-white">Dual-Tier Dynamic Pricing</h3>
+            <p class="mt-2 text-xs text-slate-400 leading-relaxed">
+              Splits retail spare part prices from vehicle-specific installation fees. Dismantling a complex Maxi-scooter or Sportbike fairing automatically charges more labor than a basic scooter.
+            </p>
+          </div>
+
+          <!-- Pillar 2 -->
+          <div class="p-6 rounded-2xl bg-panel border border-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.14)] transition-all">
+            <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-mono font-bold text-sm mb-4">
+              02
+            </div>
+            <h3 class="text-base font-semibold text-white">SQLite WAL Concurrency</h3>
+            <p class="mt-2 text-xs text-slate-400 leading-relaxed">
+              Write-Ahead Logging mode enables simultaneous non-blocking reads and writes across multiple bay terminals. Thread-isolated with 5000ms busy timeout protection.
+            </p>
+          </div>
+
+          <!-- Pillar 3 -->
+          <div class="p-6 rounded-2xl bg-panel border border-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.14)] transition-all">
+            <div class="w-10 h-10 rounded-lg bg-brand/15 border border-brand/30 text-indigo-300 flex items-center justify-center font-mono font-bold text-sm mb-4">
+              03
+            </div>
+            <h3 class="text-base font-semibold text-white">Deterministic Invoice OCR</h3>
+            <p class="mt-2 text-xs text-slate-400 leading-relaxed">
+              Local supplier receipt parser for OEM distributors. Reconciles <code class="text-sky-300">sum(subtotal) == grand_total</code> with zero AI hallucinations.
+            </p>
+          </div>
+
+          <!-- Pillar 4 -->
+          <div class="p-6 rounded-2xl bg-panel border border-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.14)] transition-all">
+            <div class="w-10 h-10 rounded-lg bg-white/5 border border-white/10 text-slate-300 flex items-center justify-center font-mono font-bold text-sm mb-4">
+              04
+            </div>
+            <h3 class="text-base font-semibold text-white">Idempotency &amp; Net Guards</h3>
+            <p class="mt-2 text-xs text-slate-400 leading-relaxed">
+              Unique client transaction UUIDs prevent double-billing on connection retries. Untrusted non-loopback network IPs require timing-attack immune bearer authentication.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: BENCHMARKS -->
+    <section id="benchmarks" class="py-20 border-b border-[rgba(255,255,255,0.06)] bg-panel/30">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="max-w-3xl mb-12">
+          <div class="text-xs font-mono text-sky-400 uppercase tracking-widest font-semibold mb-2">Comparative Verification</div>
+          <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">
+            Measured Runtime Benchmarks
+          </h2>
+          <p class="mt-3 text-sm sm:text-base text-slate-400 leading-relaxed">
+            Comparing BengkelStack Core against typical Node.js and Python web frameworks on entry-level workshop hardware (Intel Celeron / Core i3, 4GB RAM).
+          </p>
+        </div>
+
+        <div class="rounded-xl border border-[rgba(255,255,255,0.08)] bg-panel overflow-x-auto">
+          <table class="w-full text-left text-xs font-mono">
+            <thead>
+              <tr class="bg-surface border-b border-[rgba(255,255,255,0.08)] text-slate-400 uppercase tracking-wider">
+                <th class="p-4">Benchmark Metric</th>
+                <th class="p-4 text-sky-400">BengkelStack Core</th>
+                <th class="p-4 text-slate-400">Node / Express POS</th>
+                <th class="p-4 text-slate-400">FastAPI + Postgres</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[rgba(255,255,255,0.06)] text-slate-300">
+              <tr>
+                <td class="p-4 font-sans font-medium text-white">Third-Party Pip / NPM Packages</td>
+                <td class="p-4 text-emerald-400 font-bold">0 packages (Zero)</td>
+                <td class="p-4">840+ node_modules</td>
+                <td class="p-4">42 pip packages</td>
+              </tr>
+              <tr>
+                <td class="p-4 font-sans font-medium text-white">Application Disk Footprint</td>
+                <td class="p-4 text-emerald-400 font-bold">&lt; 0.5 MB</td>
+                <td class="p-4">240 MB</td>
+                <td class="p-4">160 MB</td>
+              </tr>
+              <tr>
+                <td class="p-4 font-sans font-medium text-white">Cold Start Time to Ready</td>
+                <td class="p-4 text-emerald-400 font-bold">0.18 seconds</td>
+                <td class="p-4">2.40 seconds</td>
+                <td class="p-4">1.85 seconds</td>
+              </tr>
+              <tr>
+                <td class="p-4 font-sans font-medium text-white">RAM Consumption Idle</td>
+                <td class="p-4 text-emerald-400 font-bold">18 MB</td>
+                <td class="p-4">120 MB</td>
+                <td class="p-4">95 MB</td>
+              </tr>
+              <tr>
+                <td class="p-4 font-sans font-medium text-white">Offline Capability Without Internet</td>
+                <td class="p-4 text-emerald-400 font-bold">100% Native Edge</td>
+                <td class="p-4">Requires local Redis</td>
+                <td class="p-4">Requires DB server daemon</td>
+              </tr>
+              <tr>
+                <td class="p-4 font-sans font-medium text-white">Full Test Suite Execution (83 Tests)</td>
+                <td class="p-4 text-emerald-400 font-bold">~1.5 seconds</td>
+                <td class="p-4">~18.0 seconds</td>
+                <td class="p-4">~12.0 seconds</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 5: FORMAL SDLC SPECIFICATIONS -->
+    <section id="specifications" class="py-20 border-b border-[rgba(255,255,255,0.06)]">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="max-w-3xl mb-12">
+          <div class="text-xs font-mono text-sky-400 uppercase tracking-widest font-semibold mb-2">Engineering Rigor</div>
+          <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">
+            5-Gate Enterprise SDLC Documentation
+          </h2>
+          <p class="mt-3 text-sm sm:text-base text-slate-400 leading-relaxed">
+            BengkelStack was not built through ad-hoc vibe coding. Every module is governed by formal specifications, architectural decision records, and OpenAPI 3.0.3 contracts.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-xs">
+          
+          <a href="https://github.com/BengkelStack/bengkelstack-core/blob/main/docs/PRD.md" target="_blank" class="p-5 rounded-xl bg-panel border border-[rgba(255,255,255,0.08)] hover:border-sky-400/40 transition-all flex flex-col justify-between">
+            <div>
+              <div class="font-mono text-sky-400 text-[10px] uppercase font-semibold">Gate 1 • Product Spec</div>
+              <div class="font-bold text-white text-sm mt-1">PRD.md (5 Whys &amp; Personas)</div>
+              <p class="mt-2 text-slate-400 leading-relaxed">Problem statement, target KPIs, and boundary scope for independent workshop operations.</p>
+            </div>
+            <div class="mt-4 font-mono text-[10px] text-slate-500">View on GitHub &rarr;</div>
+          </a>
+
+          <a href="https://github.com/BengkelStack/bengkelstack-core/blob/main/docs/SRS.md" target="_blank" class="p-5 rounded-xl bg-panel border border-[rgba(255,255,255,0.08)] hover:border-sky-400/40 transition-all flex flex-col justify-between">
+            <div>
+              <div class="font-mono text-sky-400 text-[10px] uppercase font-semibold">Gate 2 • IEEE 830 Spec</div>
+              <div class="font-bold text-white text-sm mt-1">SRS.md (Requirements)</div>
+              <p class="mt-2 text-slate-400 leading-relaxed">Functional requirements FR-01 through FR-08, latency limits, and ISO 27001 security constraints.</p>
+            </div>
+            <div class="mt-4 font-mono text-[10px] text-slate-500">View on GitHub &rarr;</div>
+          </a>
+
+          <a href="https://github.com/BengkelStack/bengkelstack-core/blob/main/docs/ARCHITECTURE.md" target="_blank" class="p-5 rounded-xl bg-panel border border-[rgba(255,255,255,0.08)] hover:border-sky-400/40 transition-all flex flex-col justify-between">
+            <div>
+              <div class="font-mono text-sky-400 text-[10px] uppercase font-semibold">Gate 3 • System Design</div>
+              <div class="font-bold text-white text-sm mt-1">ARCHITECTURE.md &amp; 3NF</div>
+              <p class="mt-2 text-slate-400 leading-relaxed">Third Normal Form relational schemas, work order state machines, and ADR decision logs.</p>
+            </div>
+            <div class="mt-4 font-mono text-[10px] text-slate-500">View on GitHub &rarr;</div>
+          </a>
+
+          <a href="https://github.com/BengkelStack/bengkelstack-core/blob/main/docs/api/openapi.yaml" target="_blank" class="p-5 rounded-xl bg-panel border border-[rgba(255,255,255,0.08)] hover:border-sky-400/40 transition-all flex flex-col justify-between">
+            <div>
+              <div class="font-mono text-sky-400 text-[10px] uppercase font-semibold">Gate 4 • Contract First</div>
+              <div class="font-bold text-white text-sm mt-1">OpenAPI 3.0.3 Contract</div>
+              <p class="mt-2 text-slate-400 leading-relaxed">Strict schemas for work orders, vehicle lookups, cash change tender, and invoice scans.</p>
+            </div>
+            <div class="mt-4 font-mono text-[10px] text-slate-500">View on GitHub &rarr;</div>
+          </a>
+
+          <a href="https://github.com/BengkelStack/bengkelstack-core/blob/main/docs/BengkelStack_Comprehensive_SDLC_Audit_Report.pdf" target="_blank" class="p-5 rounded-xl bg-panel border border-[rgba(255,255,255,0.08)] hover:border-sky-400/40 transition-all flex flex-col justify-between">
+            <div>
+              <div class="font-mono text-emerald-400 text-[10px] uppercase font-semibold">Gate 5 • Master Audit</div>
+              <div class="font-bold text-white text-sm mt-1">Master SDLC Report (PDF)</div>
+              <p class="mt-2 text-slate-400 leading-relaxed">Formal PDF certificate verifying 83 passing automated tests and PRR production readiness.</p>
+            </div>
+            <div class="mt-4 font-mono text-[10px] text-slate-500">Download PDF &rarr;</div>
+          </a>
+
+          <a href="https://github.com/BengkelStack/bengkelstack-core/blob/main/docs/NVIDIA_INCEPTION_PITCH.md" target="_blank" class="p-5 rounded-xl bg-panel border border-[rgba(255,255,255,0.08)] hover:border-sky-400/40 transition-all flex flex-col justify-between">
+            <div>
+              <div class="font-mono text-emerald-400 text-[10px] uppercase font-semibold">Edge AI Track</div>
+              <div class="font-bold text-white text-sm mt-1">NVIDIA Inception Pitch</div>
+              <p class="mt-2 text-slate-400 leading-relaxed">Technical architecture for local Jetson Orin Nano TensorRT INT8 supplier invoice parsing.</p>
+            </div>
+            <div class="mt-4 font-mono text-[10px] text-slate-500">View on GitHub &rarr;</div>
+          </a>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 6: TRANSPARENT PRICING -->
+    <section id="pricing" class="py-20 border-b border-[rgba(255,255,255,0.06)] bg-panel/30">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="max-w-3xl mb-12">
+          <div class="text-xs font-mono text-sky-400 uppercase tracking-widest font-semibold mb-2">Transparent Deployment</div>
+          <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">
+            Fair, Predictable Open-Core Pricing
+          </h2>
+          <p class="mt-3 text-sm sm:text-base text-slate-400 leading-relaxed">
+            Free and open-source forever for standalone workshops. Paid cloud sync tiers for shop owners who need mobile business telemetry.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+          
+          <!-- Tier 1: Community -->
+          <div class="p-6 rounded-2xl bg-panel border border-[rgba(255,255,255,0.08)] flex flex-col justify-between">
+            <div>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/15 text-emerald-400 font-semibold mb-3">
+                MIT License
+              </span>
+              <h3 class="text-base font-bold text-white">Community Self-Hosted</h3>
+              <p class="text-xs text-slate-400 mt-1">Autonomous edge execution for any shop</p>
+              <div class="mt-6 mb-6">
+                <span class="text-3xl font-extrabold font-mono text-white">$0</span>
+                <span class="text-xs text-slate-400 font-mono"> / free forever</span>
+              </div>
+              <ul class="space-y-3 text-xs text-slate-300">
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>100% Python standard library runtime</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>Local SQLite Write-Ahead Logging (WAL)</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>Dual-tier pricing &amp; 40-col thermal slip engine</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>Zero pip packages, fully air-gapped capable</span>
+                </li>
+              </ul>
+            </div>
+            <div class="mt-8">
+              <a href="https://github.com/BengkelStack/bengkelstack-core" target="_blank" rel="noopener noreferrer" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-mono font-medium rounded-lg bg-white/[0.04] border border-[rgba(255,255,255,0.1)] text-slate-200 hover:text-white hover:border-sky-400 transition-all">
+                <span>Clone from GitHub</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Tier 2: Pro Sync (Highlighted) -->
+          <div class="p-6 rounded-2xl bg-surface border-2 border-sky-500/60 flex flex-col justify-between relative shadow-xl shadow-sky-500/5">
+            <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-sky-500 text-slate-950 font-mono text-[10px] font-bold uppercase tracking-wider">
+              Most Popular
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white">Pro Workshop Sync</h3>
+              <p class="text-xs text-slate-400 mt-1">Multi-bay service centers (2 to 6 bays)</p>
+              <div class="mt-6 mb-6">
+                <span class="text-3xl font-extrabold font-mono text-white">$19</span>
+                <span class="text-xs text-slate-400 font-mono"> / mo (Rp 299k)</span>
+              </div>
+              <ul class="space-y-3 text-xs text-slate-300">
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-sky-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>Everything in Community Edition</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-sky-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>Encrypted asynchronous daily cloud backups</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-sky-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>Mobile owner reporting &amp; financial telemetry</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-sky-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>Multimodal invoice OCR cloud sync gateway</span>
+                </li>
+              </ul>
+            </div>
+            <div class="mt-8">
+              <a href="mailto:founder@bengkelstack.com?subject=Pro%20Workshop%20Sync%20Inquiry" class="w-full inline-flex items-center justify-center px-4 py-2.5 text-xs font-semibold rounded-lg bg-sky-500 text-slate-950 hover:bg-sky-400 transition-all shadow-md">
+                Contact for Pro Sync
+              </a>
+            </div>
+          </div>
+
+          <!-- Tier 3: Enterprise -->
+          <div class="p-6 rounded-2xl bg-panel border border-[rgba(255,255,255,0.08)] flex flex-col justify-between">
+            <div>
+              <h3 class="text-base font-bold text-white">Enterprise Fleet &amp; Franchise</h3>
+              <p class="text-xs text-slate-400 mt-1">Multi-branch chains &amp; parts distributors</p>
+              <div class="mt-6 mb-6">
+                <span class="text-3xl font-extrabold font-mono text-white">$49</span>
+                <span class="text-xs text-slate-400 font-mono"> / mo (Rp 799k)</span>
+              </div>
+              <ul class="space-y-3 text-xs text-slate-300">
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-sky-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>Unlimited service bay branches</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-sky-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>Dedicated distributor warehouse synchronization</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-sky-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>NVIDIA Jetson edge AI deployment consultation</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-sky-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>Custom SLA &amp; dedicated sync node</span>
+                </li>
+              </ul>
+            </div>
+            <div class="mt-8">
+              <a href="mailto:founder@bengkelstack.com?subject=Enterprise%20Fleet%20Inquiry" class="w-full inline-flex items-center justify-center px-4 py-2.5 text-xs font-semibold rounded-lg bg-white/[0.04] border border-[rgba(255,255,255,0.1)] text-slate-200 hover:text-white hover:bg-white/[0.08] transition-all">
+                Enterprise Inquiries
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="py-12 bg-[#040506] border-t border-[rgba(255,255,255,0.06)] text-xs text-slate-400">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-8 border-b border-[rgba(255,255,255,0.06)]">
+        <div>
+          <div class="flex items-center gap-2 text-white font-bold text-base">
+            <span>Bengkel<span class="text-sky-400">Stack</span></span>
+          </div>
+          <p class="mt-1 text-slate-400">Edge-First Workshop Operating System &amp; Dynamic Pricing Engine.</p>
+        </div>
+        <div class="flex flex-wrap gap-6 font-medium text-slate-300">
+          <a href="#interactive-pos" class="hover:text-white transition-colors">Live POS Demo</a>
+          <a href="#architecture" class="hover:text-white transition-colors">Architecture</a>
+          <a href="#benchmarks" class="hover:text-white transition-colors">Benchmarks</a>
+          <a href="#pricing" class="hover:text-white transition-colors">Pricing</a>
+          <a href="https://github.com/BengkelStack/bengkelstack-core" target="_blank" rel="noopener noreferrer" class="text-sky-400 hover:underline">GitHub Core (83 Tests)</a>
+          <a href="mailto:founder@bengkelstack.com" class="hover:text-white transition-colors">founder@bengkelstack.com</a>
+        </div>
+      </div>
+
+      <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500 font-mono">
+        <div>
+          MIT License. Copyright &copy; 2026 BengkelStack / Rahmad Riyadi.
+        </div>
+        <div>
+          Compatible with ESC/POS 58mm/80mm thermal printers &amp; SQLite WAL.
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- MULTI-MARKET JAVASCRIPT STATE ENGINE -->
+  <script>
+    const countryCatalogs = {
+      ID: {
+        code: "ID",
+        locale: "id-ID",
+        currencySymbolAfter: false,
+        name: "Indonesia",
+        flag: "🇮🇩",
+        currency: "Rp",
+        currencyCode: "IDR",
+        decimalPlaces: 0,
+        i18n: {
+          step1: "1. Pilih Kategori Kendaraan Pelanggan",
+          step2: "2. Tambah Cepat Suku Cadang & Jasa",
+          cartTitle: "Keranjang Surat Perintah Kerja (SPK)",
+          itemCountSuffix: "Item",
+          takeaway: "Beli / Bawa Pulang",
+          installed: "Pasang di Bengkel",
+          partLabel: "Part",
+          laborLabel: "Ongkos",
+          grandTotal: "Total Tagihan Deterministik",
+          resetBtn: "Kosongkan",
+          checkoutBtn: "Simulasi Bayar & Cetak Nota",
+          checkoutDone: "✓ Transaksi Selesai & Dicetak!",
+          thermalTitle: "Pratinjau Struk Kasir Termal",
+          emptyCart: "Keranjang kosong. Klik '+ Tambah Cepat' di atas untuk menghitung estimasi.",
+          receiptNo: "No. Nota:",
+          dateTime: "Waktu:",
+          plateNo: "Plat Motor:",
+          customer: "Pelanggan:",
+          paymentMethod: "Metode:",
+          paymentCash: "TUNAI (CASH)",
+          itemActionHeader: "ITEM (AKSI)",
+          subtotalHeader: "SUBTOTAL",
+          totalAmount: "TOTAL BAYAR:",
+          cashTendered: "TUNAI DITERIMA:",
+          changeDue: "UANG KEMBALIAN:",
+          thankYou: "Terima kasih atas kunjungan Anda!",
+          installTag: "PASANG",
+          retailTag: "RETAIL"
+        },
+        workshopName: "BENGKEL MOTOR JAYA ABADI",
+        receiptHeader: "LAYANAN SERVIS & SUKU CADANG",
+        receiptFooter: "Garansi Servis 7 Hari / 500 KM",
+        vehicles: {
+          beat: { name: "Honda Beat FI", type: "Entry Scooter 110cc", plate: "B 1234 XYZ", owner: "Budi Santoso" },
+          vario: { name: "Honda Vario 125", type: "Mid Scooter 125cc", plate: "D 5678 AB", owner: "Rian Hidayat" },
+          nmax: { name: "Yamaha NMAX 155", type: "Maxi Scooter 155cc", plate: "B 8901 DEF", owner: "Ahmad Fauzi" },
+          pcx: { name: "Honda PCX 160", type: "Heavy Maxi 160cc", plate: "B 9999 VIP", owner: "Hendro Wijaya" }
+        },
+        items: {
+          oil: { code: "OIL-MPX2", name: "Engine Oil AHM MPX2 (0.8L)", price: 48000, installFees: { beat: 5000, vario: 5000, nmax: 10000, pcx: 10000 } },
+          pad: { code: "BRK-PAD-F", name: "Kampas Rem Depan Genuine", price: 55000, installFees: { beat: 10000, vario: 15000, nmax: 20000, pcx: 20000 } },
+          belt: { code: "DRV-BELT", name: "V-Belt CVT OEM Replacement", price: 135000, installFees: { beat: 25000, vario: 35000, nmax: 50000, pcx: 55000 } },
+          tuneup: { code: "SVC-TUNE", name: "Servis Rutin & Pembersihan CVT", price: 0, installFees: { beat: 45000, vario: 55000, nmax: 75000, pcx: 80000 } }
+        },
+        defaultCart: [
+          { id: 'oil', action: 'installed' },
+          { id: 'pad', action: 'installed' },
+          { id: 'belt', action: 'takeaway' }
+        ]
+      },
+      VN: {
+        code: "VN",
+        locale: "vi-VN",
+        currencySymbolAfter: true,
+        name: "Vietnam",
+        flag: "🇻🇳",
+        currency: "₫",
+        currencyCode: "VND",
+        decimalPlaces: 0,
+        i18n: {
+          step1: "1. Chọn dòng xe máy của khách hàng",
+          step2: "2. Thêm nhanh phụ tùng & tiền công",
+          cartTitle: "Giỏ hàng lệnh sửa chữa (LSC)",
+          itemCountSuffix: "Mục",
+          takeaway: "Mang về",
+          installed: "Lắp tại tiệm",
+          partLabel: "Phụ tùng",
+          laborLabel: "Tiền công",
+          grandTotal: "Tổng thanh toán chuẩn xác",
+          resetBtn: "Xóa giỏ",
+          checkoutBtn: "Thanh toán & In hóa đơn",
+          checkoutDone: "✓ Đã thanh toán & In phiếu!",
+          thermalTitle: "Xem trước hóa đơn in nhiệt",
+          emptyCart: "Giỏ hàng trống. Nhấp '+ Thêm nhanh' ở trên để tính giá.",
+          receiptNo: "Số phiếu:",
+          dateTime: "Thời gian:",
+          plateNo: "Biển số xe:",
+          customer: "Khách hàng:",
+          paymentMethod: "Phương thức:",
+          paymentCash: "TIEN MAT (CASH)",
+          itemActionHeader: "PHỤ TÙNG (THAO TÁC)",
+          subtotalHeader: "THÀNH TIỀN",
+          totalAmount: "TỔNG CỘNG:",
+          cashTendered: "TIỀN KHÁCH ĐƯA:",
+          changeDue: "TIỀN THỐI LẠI:",
+          thankYou: "Cảm ơn quý khách đã tin tưởng!",
+          installTag: "LẮP RÁP",
+          retailTag: "MUA VỀ"
+        },
+        workshopName: "TIEM SUA XE MAY SAI GON",
+        receiptHeader: "DICH VU SUA CHUA & PHU TUNG",
+        receiptFooter: "Bao Hanh 7 Ngay / 500 KM",
+        vehicles: {
+          wave: { name: "Honda Wave Alpha", type: "Xe so pho thong 110cc", plate: "29-A1 123.45", owner: "Nguyen Van Minh" },
+          lead: { name: "Honda Lead 125", type: "Xe tay ga do thi 125cc", plate: "59-B1 678.90", owner: "Tran Thi Hoa" },
+          airblade: { name: "Honda Air Blade 160", type: "Xe tay ga the thao 160cc", plate: "43-C1 999.88", owner: "Le Hoang Nam" },
+          exciter: { name: "Yamaha Exciter 155", type: "Xe con tay 155cc", plate: "72-D1 555.22", owner: "Pham Duc Anh" }
+        },
+        items: {
+          oil: { code: "OIL-CASTROL", name: "Dau Nhot Castrol Power1 0.8L", price: 115000, installFees: { wave: 15000, lead: 20000, airblade: 25000, exciter: 25000 } },
+          pad: { code: "BRK-PAD-OEM", name: "Bo Ma Phanh Truoc Nissin", price: 140000, installFees: { wave: 25000, lead: 35000, airblade: 40000, exciter: 45000 } },
+          belt: { code: "DRV-BELT-BANDO", name: "Day Curoa Bando Nhat Ban", price: 320000, installFees: { wave: 40000, lead: 60000, airblade: 80000, exciter: 0 } },
+          tuneup: { code: "SVC-BAODUONG", name: "Bao Duong Toan Bo Xe & Noi", price: 0, installFees: { wave: 120000, lead: 160000, airblade: 200000, exciter: 220000 } }
+        },
+        defaultCart: [
+          { id: 'oil', action: 'installed' },
+          { id: 'pad', action: 'installed' },
+          { id: 'belt', action: 'takeaway' }
+        ]
+      },
+      TH: {
+        code: "TH",
+        locale: "th-TH",
+        currencySymbolAfter: false,
+        name: "Thailand",
+        flag: "🇹🇭",
+        currency: "฿",
+        currencyCode: "THB",
+        decimalPlaces: 0,
+        i18n: {
+          step1: "1. เลือกรุ่นรถจักรยานยนต์ของลูกค้า",
+          step2: "2. เพิ่มอะไหล่และค่าแรงด่วน",
+          cartTitle: "รายการใบสั่งซ่อม (Work Order)",
+          itemCountSuffix: "รายการ",
+          takeaway: "ซื้อกลับ",
+          installed: "ติดตั้งที่ร้าน",
+          partLabel: "อะไหล่",
+          laborLabel: "ค่าแรง",
+          grandTotal: "ยอดรวมสุทธิที่คำนวณได้",
+          resetBtn: "รีเซ็ต",
+          checkoutBtn: "ชำระเงินและพิมพ์ใบเสร็จ",
+          checkoutDone: "✓ ชำระเงินและพิมพ์เรียบร้อย!",
+          thermalTitle: "ตัวอย่างใบเสร็จพิมพ์ความร้อน",
+          emptyCart: "ตะกร้าว่างเปล่า กด '+ เพิ่มด่วน' ด้านบนเพื่อคำนวณราคา",
+          receiptNo: "เลขที่ใบเสร็จ:",
+          dateTime: "วันเวลา:",
+          plateNo: "ทะเบียนรถ:",
+          customer: "ลูกค้า:",
+          paymentMethod: "วิธีชำระ:",
+          paymentCash: "เงินสด (CASH)",
+          itemActionHeader: "รายการ (การบริการ)",
+          subtotalHeader: "รวมเงิน",
+          totalAmount: "ยอดรวมทั้งหมด:",
+          cashTendered: "รับเงินสด:",
+          changeDue: "เงินทอน:",
+          thankYou: "ขอบคุณที่ใช้บริการ!",
+          installTag: "ติดตั้ง",
+          retailTag: "ซื้อกลับ"
+        },
+        workshopName: "BANGKOK MOTO SERVICE",
+        receiptHeader: "REPAIR & GENUINE PARTS",
+        receiptFooter: "Warranty 7 Days / 500 KM",
+        vehicles: {
+          wave110: { name: "Honda Wave 110i", type: "Commuter Moped 110cc", plate: "1กข 1234", owner: "Somchai Prasert" },
+          click160: { name: "Honda Click 160", type: "Compact Scooter 160cc", plate: "2หม 5678", owner: "Anan Suksom" },
+          filano: { name: "Yamaha Grand Filano", type: "Hybrid Scooter 125cc", plate: "3กร 9901", owner: "Kanya Rattanaporn" },
+          forza350: { name: "Honda Forza 350", type: "Heavy Touring 330cc", plate: "9สน 8888", owner: "Chatchai Wongsawat" }
+        },
+        items: {
+          oil: { code: "OIL-MOTUL-SCOOT", name: "Motul Scooter LE 10W-30 (0.8L)", price: 190, installFees: { wave110: 40, click160: 50, filano: 50, forza350: 80 } },
+          pad: { code: "BRK-PAD-BKK", name: "Front Disc Brake Pads Genuine", price: 280, installFees: { wave110: 60, click160: 80, filano: 80, forza350: 150 } },
+          belt: { code: "DRV-BELT-MITSUB", name: "OEM Drive Belt Mitsuboshi", price: 650, installFees: { wave110: 100, click160: 150, filano: 150, forza350: 300 } },
+          tuneup: { code: "SVC-THAI-MAINT", name: "Periodic Maintenance Service", price: 0, installFees: { wave110: 200, click160: 300, filano: 300, forza350: 500 } }
+        },
+        defaultCart: [
+          { id: 'oil', action: 'installed' },
+          { id: 'pad', action: 'installed' },
+          { id: 'belt', action: 'takeaway' }
+        ]
+      },
+      PH: {
+        code: "PH",
+        locale: "en-PH",
+        currencySymbolAfter: false,
+        name: "Philippines",
+        flag: "🇵🇭",
+        currency: "₱",
+        currencyCode: "PHP",
+        decimalPlaces: 2,
+        i18n: {
+          step1: "1. Piliin ang Modelo ng Motorsiklo",
+          step2: "2. Mabilisang Pagdagdag ng Parte at Serbisyo",
+          cartTitle: "Listahan ng Trabaho (Job Order)",
+          itemCountSuffix: "Aytem",
+          takeaway: "Bili Lang / Iuwi",
+          installed: "Ipakabit sa Talyer",
+          partLabel: "Parte",
+          laborLabel: "Kabayaran",
+          grandTotal: "Kabuuang Halaga ng Singil",
+          resetBtn: "I-reset",
+          checkoutBtn: "Magbayad at Mag-print ng Resibo",
+          checkoutDone: "✓ Bayad Na & Naka-print!",
+          thermalTitle: "Preview ng Resibo sa Thermal Printer",
+          emptyCart: "Walang laman ang cart. Pindutin ang '+ Mabilisang Pagdagdag' sa itaas.",
+          receiptNo: "Resibo Blg:",
+          dateTime: "Petsa/Oras:",
+          plateNo: "Plaka ng Motor:",
+          customer: "Kostumer:",
+          paymentMethod: "Paraan:",
+          paymentCash: "CASH TENDER",
+          itemActionHeader: "PARTE (AKSIYON)",
+          subtotalHeader: "SUBTOTAL",
+          totalAmount: "KABUUANG SINGIL:",
+          cashTendered: "BAYAD NA PERA:",
+          changeDue: "SUKLI:",
+          thankYou: "Salamat sa inyong pagbisita!",
+          installTag: "IKABIT",
+          retailTag: "IUWI"
+        },
+        workshopName: "MANILA MOTORCYCLE CLINIC",
+        receiptHeader: "REPAIR SERVICE & MOTOR PARTS",
+        receiptFooter: "Service Warranty 7 Days / 500 KM",
+        vehicles: {
+          mio: { name: "Yamaha Mio i125", type: "Automatic Scooter 125cc", plate: "NA 1234", owner: "Juan Dela Cruz" },
+          click: { name: "Honda Click 125i", type: "Liquid Cooled 125cc", plate: "ND 5678", owner: "Maria Santos" },
+          aerox: { name: "Yamaha Aerox 155", type: "Sport Maxi Scooter 155cc", plate: "NF 9012", owner: "Ramon Bautista" },
+          raider: { name: "Suzuki Raider R150", type: "Underbone DOHC 150cc", plate: "NC 8888", owner: "Angelo Reyes" }
+        },
+        items: {
+          oil: { code: "OIL-YAMALUBE", name: "Yamalube 4T AT 10W-40 (800ml)", price: 295.00, installFees: { mio: 50.00, click: 60.00, aerox: 80.00, raider: 70.00 } },
+          pad: { code: "BRK-PAD-BENDIX", name: "Bendix Front Brake Pads MD32", price: 380.00, installFees: { mio: 80.00, click: 100.00, aerox: 120.00, raider: 120.00 } },
+          belt: { code: "DRV-BELT-GATES", name: "Gates Powerlink CVT V-Belt", price: 850.00, installFees: { mio: 150.00, click: 200.00, aerox: 250.00, raider: 0 } },
+          tuneup: { code: "SVC-OVERHAUL-CVT", name: "CVT Cleaning & FI System Flush", price: 0.00, installFees: { mio: 250.00, click: 300.00, aerox: 400.00, raider: 350.00 } }
+        },
+        defaultCart: [
+          { id: 'oil', action: 'installed' },
+          { id: 'pad', action: 'installed' },
+          { id: 'belt', action: 'takeaway' }
+        ]
+      },
+      MY: {
+        code: "MY",
+        locale: "ms-MY",
+        currencySymbolAfter: false,
+        name: "Malaysia",
+        flag: "🇲🇾",
+        currency: "RM",
+        currencyCode: "MYR",
+        decimalPlaces: 2,
+        i18n: {
+          step1: "1. Pilih Model Motosikal Pelanggan",
+          step2: "2. Tambah Pantas Alat Ganti & Upah",
+          cartTitle: "Troli Pesanan Kerja Bengkel (SPK)",
+          itemCountSuffix: "Item",
+          takeaway: "Bawa Balik",
+          installed: "Pasang di Bengkel",
+          partLabel: "Alat Ganti",
+          laborLabel: "Upah Pasang",
+          grandTotal: "Jumlah Keseluruhan Bersih",
+          resetBtn: "Kosongkan",
+          checkoutBtn: "Simulasi Bayar & Cetak Resit",
+          checkoutDone: "✓ Pembayaran Berjaya & Dicetak!",
+          thermalTitle: "Pratonton Resit Cetakan Haba",
+          emptyCart: "Troli kosong. Sila klik '+ Tambah Pantas' di atas.",
+          receiptNo: "No. Resit:",
+          dateTime: "Tarikh/Masa:",
+          plateNo: "No. Pendaftaran:",
+          customer: "Pelanggan:",
+          paymentMethod: "Kaedah:",
+          paymentCash: "TUNAI (CASH)",
+          itemActionHeader: "ITEM (TINDAKAN)",
+          subtotalHeader: "SUBTOTAL",
+          totalAmount: "JUMLAH BAYARAN:",
+          cashTendered: "TUNAI DITERIMA:",
+          changeDue: "BAKI WANG:",
+          thankYou: "Terima kasih atas sokongan anda!",
+          installTag: "PASANG",
+          retailTag: "RETAIL"
+        },
+        workshopName: "BENGKEL MOTOR KUALA LUMPUR",
+        receiptHeader: "SERVIS MOTOR & ALAT GANTI",
+        receiptFooter: "Jaminan Servis 7 Hari / 500 KM",
+        vehicles: {
+          y15: { name: "Yamaha Y15ZR (Y-Suku)", type: "Moped Sport 150cc", plate: "W 1234 A", owner: "Mohd Hafiz" },
+          rsx: { name: "Honda RS-X 150", type: "DOHC 6-Speed 150cc", plate: "B 5678 C", owner: "Azman Ismail" },
+          nvx: { name: "Yamaha NVX 155", type: "Maxi Automatic 155cc", plate: "J 9012 D", owner: "Khairul Nizam" },
+          wave: { name: "Honda Wave Alpha", type: "Keluarga Moped 110cc", plate: "P 8888 E", owner: "Tan Ah Hock" }
+        },
+        items: {
+          oil: { code: "OIL-SHELL-AX7", name: "Shell Advance AX7 10W-40 (1L)", price: 38.00, installFees: { y15: 8.00, rsx: 8.00, nvx: 10.00, wave: 5.00 } },
+          pad: { code: "BRK-PAD-NISSIN", name: "Nissin Genuine Brake Pad Set", price: 45.00, installFees: { y15: 12.00, rsx: 15.00, nvx: 18.00, wave: 10.00 } },
+          chain: { code: "DRV-RK-CHAIN", name: "RK Takasago 428 O-Ring Chain", price: 110.00, installFees: { y15: 25.00, rsx: 25.00, nvx: 40.00, wave: 20.00 } },
+          tuneup: { code: "SVC-TUNE-KL", name: "Servis Karburetor / FI Tuning", price: 0.00, installFees: { y15: 35.00, rsx: 40.00, nvx: 50.00, wave: 25.00 } }
+        },
+        defaultCart: [
+          { id: 'oil', action: 'installed' },
+          { id: 'pad', action: 'installed' },
+          { id: 'chain', action: 'takeaway' }
+        ]
+      },
+      IN: {
+        code: "IN",
+        locale: "en-IN",
+        currencySymbolAfter: false,
+        name: "India",
+        flag: "🇮🇳",
+        currency: "₹",
+        currencyCode: "INR",
+        decimalPlaces: 0,
+        i18n: {
+          step1: "1. ग्राहक की बाइक का मॉडल चुनें (Select Bike)",
+          step2: "2. स्पेयर पार्ट्स और लेबर जोड़ें (Add Items)",
+          cartTitle: "सक्रिय जॉब कार्ड (Active Job Card)",
+          itemCountSuffix: "आइटम",
+          takeaway: "काउंटर से खरीदें (Retail)",
+          installed: "वर्कशॉप में लगाएं (Fitted)",
+          partLabel: "पार्ट्स",
+          laborLabel: "मजदूरी",
+          grandTotal: "कुल बिल राशि (Grand Total)",
+          resetBtn: "रीसेट करें",
+          checkoutBtn: "बिल भुगतान और रसीद प्रिंट करें",
+          checkoutDone: "✓ भुगतान सफल & बिल प्रिंट!",
+          thermalTitle: "थर्मल बिल रसीद पूर्वावलोकन",
+          emptyCart: "जॉब कार्ड खाली है। पार्ट्स जोड़ने के लिए ऊपर क्लिक करें।",
+          receiptNo: "बिल संख्या (Invoice):",
+          dateTime: "दिनांक/समय:",
+          plateNo: "गाड़ी नंबर (Reg No):",
+          customer: "ग्राहक का नाम:",
+          paymentMethod: "भुगतान प्रकार:",
+          paymentCash: "नकद (CASH)",
+          itemActionHeader: "पार्ट्स / कार्य विवरण",
+          subtotalHeader: "कुल योग",
+          totalAmount: "कुल देय राशि:",
+          cashTendered: "नकद प्राप्त:",
+          changeDue: "वापसी राशि:",
+          thankYou: "हमारी सेवा चुनने के लिए धन्यवाद!",
+          installTag: "FITTED",
+          retailTag: "RETAIL"
+        },
+        workshopName: "MUMBAI TWO-WHEELER SERVICE",
+        receiptHeader: "BIKE REPAIR & SPARE PARTS",
+        receiptFooter: "Service Warranty 7 Days / 500 KM",
+        vehicles: {
+          splendor: { name: "Hero Splendor Plus", type: "Commuter 100cc", plate: "MH 01 AB 1234", owner: "Rajesh Kumar" },
+          activa: { name: "Honda Activa 6G", type: "Automatic Scooter 110cc", plate: "DL 04 CD 5678", owner: "Amit Sharma" },
+          pulsar: { name: "Bajaj Pulsar 150", type: "Sport Commuter 150cc", plate: "KA 05 EF 9012", owner: "Suresh Patil" },
+          bullet: { name: "Royal Enfield Classic 350", type: "Cruiser Single 349cc", plate: "TN 09 GH 8888", owner: "Vikramaditya Rao" }
+        },
+        items: {
+          oil: { code: "OIL-SERVO-4T", name: "Servo 4T Synth 20W-40 (900ml)", price: 360, installFees: { splendor: 50, activa: 60, pulsar: 70, bullet: 100 } },
+          pad: { code: "BRK-PAD-KBX", name: "KBX Front Disc Brake Pad Kit", price: 420, installFees: { splendor: 80, activa: 90, pulsar: 120, bullet: 150 } },
+          chain: { code: "DRV-ROLON-CHAIN", name: "Rolon Brass Chain & Sprocket", price: 1250, installFees: { splendor: 150, activa: 200, pulsar: 250, bullet: 350 } },
+          tuneup: { code: "SVC-IN-GENERAL", name: "Complete Periodic Maintenance", price: 0, installFees: { splendor: 300, activa: 350, pulsar: 450, bullet: 650 } }
+        },
+        defaultCart: [
+          { id: 'oil', action: 'installed' },
+          { id: 'pad', action: 'installed' },
+          { id: 'chain', action: 'takeaway' }
+        ]
+      },
+      US: {
+        code: "US",
+        locale: "en-US",
+        currencySymbolAfter: false,
+        name: "United States",
+        flag: "🇺🇸",
+        currency: "$",
+        currencyCode: "USD",
+        decimalPlaces: 2,
+        i18n: {
+          step1: "1. Select Customer Vehicle Category",
+          step2: "2. Quick Add Catalog Items",
+          cartTitle: "Active Work Order Cart",
+          itemCountSuffix: "Items",
+          takeaway: "Takeaway",
+          installed: "Installed",
+          partLabel: "Part",
+          laborLabel: "Labor",
+          grandTotal: "Deterministic Grand Total",
+          resetBtn: "Reset",
+          checkoutBtn: "Simulate Checkout & Pay",
+          checkoutDone: "✓ Order Settled & Printed!",
+          thermalTitle: "Thermal Printer Preview",
+          emptyCart: "Cart is empty. Click '+ Quick Add Catalog Items' above to test pricing.",
+          receiptNo: "Receipt No:",
+          dateTime: "Date/Time:",
+          plateNo: "Plate No:",
+          customer: "Customer:",
+          paymentMethod: "Payment Method:",
+          paymentCash: "CASH TENDER",
+          itemActionHeader: "ITEM (ACTION)",
+          subtotalHeader: "SUBTOTAL",
+          totalAmount: "TOTAL AMOUNT:",
+          cashTendered: "CASH TENDERED:",
+          changeDue: "CHANGE DUE:",
+          thankYou: "Thank you for your visit!",
+          installTag: "INSTALL",
+          retailTag: "RETAIL"
+        },
+        workshopName: "AUSTIN MOTO GARAGE",
+        receiptHeader: "PREMIUM MOTORCYCLE REPAIR",
+        receiptFooter: "30 Days / 500 Miles Warranty",
+        vehicles: {
+          ninja: { name: "Kawasaki Ninja 400", type: "Sport / Parallel Twin", plate: "TX-4920-K", owner: "Sarah Jenkins" },
+          rebel: { name: "Honda Rebel 500", type: "Cruiser / Twin 471cc", plate: "FL-3391-R", owner: "Michael Vance" },
+          mt07: { name: "Yamaha MT-07", type: "Naked Middleweight 689cc", plate: "NY-7104-M", owner: "David Ross" },
+          harley: { name: "Harley Sportster Iron 883", type: "V-Twin Cruiser 883cc", plate: "CA-8821-X", owner: "Alex Turner" }
+        },
+        items: {
+          oil: { code: "OIL-MOTUL-7100", name: "Motul 7100 4T 10W-40 Synthetic (1L)", price: 18.50, installFees: { ninja: 15.00, rebel: 15.00, mt07: 18.00, harley: 25.00 } },
+          pad: { code: "BRK-EBC-HH", name: "EBC Double-H Sintered Front Pads", price: 42.00, installFees: { ninja: 25.00, rebel: 25.00, mt07: 35.00, harley: 45.00 } },
+          chain: { code: "DRV-DID-520VX3", name: "D.I.D 520VX3 X-Ring Chain Set", price: 135.00, installFees: { ninja: 65.00, rebel: 60.00, mt07: 75.00, harley: 95.00 } },
+          tuneup: { code: "SVC-US-TUNE", name: "Complete Multi-Point Safety Check", price: 0.00, installFees: { ninja: 85.00, rebel: 85.00, mt07: 95.00, harley: 120.00 } }
+        },
+        defaultCart: [
+          { id: 'oil', action: 'installed' },
+          { id: 'pad', action: 'installed' },
+          { id: 'chain', action: 'takeaway' }
+        ]
+      },
+      GB: {
+        code: "GB",
+        locale: "en-GB",
+        currencySymbolAfter: false,
+        name: "United Kingdom",
+        flag: "🇬🇧",
+        currency: "£",
+        currencyCode: "GBP",
+        decimalPlaces: 2,
+        i18n: {
+          step1: "1. Select Customer Vehicle Category",
+          step2: "2. Quick Add Parts & Workshop Labour",
+          cartTitle: "Active Job Card / Work Order Cart",
+          itemCountSuffix: "Items",
+          takeaway: "Over-the-Counter",
+          installed: "Fitted in Bay",
+          partLabel: "Part",
+          laborLabel: "Labour",
+          grandTotal: "Deterministic Invoice Total",
+          resetBtn: "Clear",
+          checkoutBtn: "Settle Payment & Print Slip",
+          checkoutDone: "✓ Invoice Settled & Printed!",
+          thermalTitle: "Thermal Till Receipt Preview",
+          emptyCart: "Job card is empty. Select items above to calculate workshop estimate.",
+          receiptNo: "Invoice No:",
+          dateTime: "Date/Time:",
+          plateNo: "VRM / Plate:",
+          customer: "Customer:",
+          paymentMethod: "Payment Method:",
+          paymentCash: "CASH TENDER",
+          itemActionHeader: "PART / LABOUR",
+          subtotalHeader: "SUBTOTAL",
+          totalAmount: "TOTAL INVOICE:",
+          cashTendered: "CASH TENDERED:",
+          changeDue: "CHANGE DUE:",
+          thankYou: "Thank you for your custom!",
+          installTag: "FITTED",
+          retailTag: "RETAIL"
+        },
+        workshopName: "LONDON MOTORCYCLE WORKS",
+        receiptHeader: "MOT & SERVICE WORKSHOP",
+        receiptFooter: "30 Days Workshop Guarantee",
+        vehicles: {
+          pcx: { name: "Honda PCX 125", type: "Commuter Scooter 125cc", plate: "LN21 XYZ", owner: "Oliver Smith" },
+          mt07: { name: "Yamaha MT-07", type: "Twin Middleweight 689cc", plate: "BX19 ABC", owner: "James Wilson" },
+          striple: { name: "Triumph Street Triple 765", type: "Inline-Triple 765cc", plate: "WM22 DEF", owner: "George Clarke" },
+          gs: { name: "BMW R1250 GS", type: "Boxer Adventure 1254cc", plate: "KW23 GHI", owner: "Edward Taylor" }
+        },
+        items: {
+          oil: { code: "OIL-SILKOLENE", name: "Fuchs Silkolene Pro 4 10W-40 (1L)", price: 14.00, installFees: { pcx: 10.00, mt07: 15.00, striple: 20.00, gs: 25.00 } },
+          pad: { code: "BRK-BREMBO-CC", name: "Brembo Carbon Ceramic Brake Pads", price: 36.00, installFees: { pcx: 18.00, mt07: 25.00, striple: 35.00, gs: 40.00 } },
+          chain: { code: "DRV-RK-525XSO", name: "RK 525XSO RX-Ring Chain Kit", price: 115.00, installFees: { pcx: 30.00, mt07: 55.00, striple: 65.00, gs: 80.00 } },
+          tuneup: { code: "SVC-UK-ANNUAL", name: "Annual Minor Service & MOT Prep", price: 0.00, installFees: { pcx: 65.00, mt07: 85.00, striple: 110.00, gs: 135.00 } }
+        },
+        defaultCart: [
+          { id: 'oil', action: 'installed' },
+          { id: 'pad', action: 'installed' },
+          { id: 'chain', action: 'takeaway' }
+        ]
+      }
+    };
+
+    let currentCountryKey = 'US';
+    let currentVehKey = 'ninja';
+    let demoCart = [];
+
+    function formatCurrency(val) {
+      const c = countryCatalogs[currentCountryKey];
+      const num = Number(val || 0);
+      try {
+        const formatted = new Intl.NumberFormat(c.locale || 'en-US', {
+          minimumFractionDigits: c.decimalPlaces,
+          maximumFractionDigits: c.decimalPlaces
+        }).format(num);
+        if (c.currencySymbolAfter) {
+          return formatted + " " + c.currency;
+        }
+        return (c.currency ? c.currency + (c.currency.length > 1 ? " " : "") : "") + formatted;
+      } catch (e) {
+        return c.currency + " " + num;
+      }
+    }
+
+    function syncCountryDropdown() {
+      const sel = document.getElementById('countrySelect');
+      if (sel) {
+        sel.value = currentCountryKey;
+      }
+    }
+
+    function applyLocalizationUI(c) {
+      const t = c.i18n;
+      const elStep1 = document.getElementById('lblStep1');
+      if (elStep1) elStep1.textContent = t.step1;
+
+      const elStep2 = document.getElementById('lblStep2');
+      if (elStep2) elStep2.textContent = t.step2;
+
+      const elCartTitle = document.getElementById('lblCartTitle');
+      if (elCartTitle) elCartTitle.textContent = t.cartTitle;
+
+      const elGrandTotal = document.getElementById('lblGrandTotal');
+      if (elGrandTotal) elGrandTotal.textContent = t.grandTotal;
+
+      const elResetBtn = document.getElementById('btnResetCart');
+      if (elResetBtn) elResetBtn.textContent = t.resetBtn;
+
+      const elCheckoutBtn = document.getElementById('btnDemoCheckout');
+      if (elCheckoutBtn) elCheckoutBtn.textContent = t.checkoutBtn;
+
+      const elThermalTitle = document.getElementById('lblThermalTitle');
+      if (elThermalTitle) elThermalTitle.textContent = t.thermalTitle;
+    }
+
+    function setCountryMarket(countryCode) {
+      currentCountryKey = countryCode;
+      const c = countryCatalogs[countryCode];
+      syncCountryDropdown();
+      applyLocalizationUI(c);
+
+      document.getElementById('terminalTitle').textContent = `bengkelstack-pos:8089 (${c.name} Market Fleet)`;
+
+      // Set default vehicle for this country
+      currentVehKey = Object.keys(c.vehicles)[0];
+
+      // Populate vehicle buttons
+      const vehGrid = document.getElementById('vehButtonGrid');
+      vehGrid.innerHTML = Object.entries(c.vehicles).map(([k, v]) => `
+        <button onclick="setDemoVehicle('${k}')" id="btnVeh_${k}" class="p-2.5 rounded-lg border text-left transition-all ${k === currentVehKey ? 'border-sky-500/50 bg-sky-500/10 text-white' : 'border-[rgba(255,255,255,0.08)] bg-white/[0.02] hover:bg-white/[0.04] text-slate-300'}">
+          <div class="font-bold text-xs truncate">${v.name}</div>
+          <div class="text-[10px] text-slate-400 truncate mt-0.5">${v.type}</div>
+          <div class="text-[9px] font-mono text-sky-400/80 mt-1">${v.plate}</div>
+        </button>
+      `).join('');
+
+      // Populate quick-add item buttons
+      const itemGrid = document.getElementById('quickAddButtonGrid');
+      itemGrid.innerHTML = Object.entries(c.items).map(([k, v]) => `
+        <button onclick="addDemoItem('${k}')" class="px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-hover border border-[rgba(255,255,255,0.08)] text-slate-200 transition-colors">
+          + ${v.name} (${formatCurrency(v.price)})
+        </button>
+      `).join('');
+
+      // Reset cart to this country's default
+      demoCart = JSON.parse(JSON.stringify(c.defaultCart));
+      renderDemoCart();
+    }
+
+    function setDemoVehicle(key) {
+      currentVehKey = key;
+      const c = countryCatalogs[currentCountryKey];
+      Object.keys(c.vehicles).forEach(k => {
+        const btn = document.getElementById(`btnVeh_${k}`);
+        if (btn) {
+          btn.className = k === key
+            ? "p-2.5 rounded-lg border border-sky-500/50 bg-sky-500/10 text-white text-left transition-all"
+            : "p-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-white/[0.02] hover:bg-white/[0.04] text-slate-300 text-left transition-all";
+        }
+      });
+      renderDemoCart();
+    }
+
+    function addDemoItem(itemId) {
+      demoCart.push({ id: itemId, action: 'installed' });
+      renderDemoCart();
+    }
+
+    function removeDemoItem(idx) {
+      demoCart.splice(idx, 1);
+      renderDemoCart();
+    }
+
+    function toggleDemoAction(idx, action) {
+      demoCart[idx].action = action;
+      renderDemoCart();
+    }
+
+    function resetDemoCart() {
+      demoCart = [];
+      renderDemoCart();
+    }
+
+    function padLine(left, right, width = 40) {
+      const l = String(left || '');
+      const r = String(right || '');
+      if (l.length + r.length >= width) {
+        return (l.substring(0, width - r.length - 1) + ' ' + r).substring(0, width);
+      }
+      return l + ' '.repeat(width - l.length - r.length) + r;
+    }
+
+    function renderDemoCart() {
+      const container = document.getElementById('demoCartList');
+      const c = countryCatalogs[currentCountryKey];
+      const t = c.i18n;
+      const veh = c.vehicles[currentVehKey] || Object.values(c.vehicles)[0];
+      let grandTotal = 0;
+
+      document.getElementById('demoItemCount').textContent = `${demoCart.length} ${t.itemCountSuffix}`;
+
+      if (demoCart.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center text-slate-500 text-xs">
+            ${t.emptyCart}
+          </div>
+        `;
+        document.getElementById('demoGrandTotal').textContent = formatCurrency(0);
+        renderThermalSlip([], 0);
+        return;
+      }
+
+      const calculatedItems = demoCart.map((it, idx) => {
+        const itemData = c.items[it.id] || Object.values(c.items)[0];
+        const isInstalled = it.action === 'installed';
+        const laborFee = isInstalled ? (itemData.installFees[currentVehKey] || 0) : 0;
+        const subtotal = itemData.price + laborFee;
+        grandTotal += subtotal;
+
+        return {
+          idx,
+          id: it.id,
+          name: itemData.name,
+          code: itemData.code,
+          price: itemData.price,
+          laborFee: laborFee,
+          subtotal: subtotal,
+          action: it.action,
+          isInstalled
+        };
+      });
+
+      container.innerHTML = calculatedItems.map(item => `
+        <div class="p-3.5 flex items-center justify-between gap-3">
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold text-slate-200 truncate">${item.name}</div>
+            <div class="text-[10px] font-mono text-slate-500 flex items-center gap-2 mt-0.5">
+              <span>${item.code}</span>
+              <span>•</span>
+              <span>${t.partLabel}: ${formatCurrency(item.price)}</span>
+              ${item.isInstalled ? `<span class="text-sky-400 font-medium">• ${t.laborLabel} (${veh.name}): +${formatCurrency(item.laborFee)}</span>` : ''}
+            </div>
+          </div>
+
+          <!-- Takeaway vs Installed Switcher -->
+          <div class="inline-flex rounded-lg bg-canvas p-0.5 border border-[rgba(255,255,255,0.1)]">
+            <button onclick="toggleDemoAction(${item.idx}, 'takeaway')" class="px-2.5 py-1 rounded text-[10px] font-bold transition-all ${!item.isInstalled ? 'bg-amber-400 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'}">
+              ${t.takeaway}
+            </button>
+            <button onclick="toggleDemoAction(${item.idx}, 'installed')" class="px-2.5 py-1 rounded text-[10px] font-bold transition-all ${item.isInstalled ? 'bg-sky-400 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'}">
+              ${t.installed}
+            </button>
+          </div>
+
+          <!-- Subtotal & Remove -->
+          <div class="text-right font-mono font-bold text-slate-200 w-24">
+            ${formatCurrency(item.subtotal)}
+          </div>
+          <button onclick="removeDemoItem(${item.idx})" class="text-slate-500 hover:text-rose-400 p-1 text-sm transition-colors" title="Remove Item">&times;</button>
+        </div>
+      `).join('');
+
+      document.getElementById('demoGrandTotal').textContent = formatCurrency(grandTotal);
+      const elParts = document.getElementById('demoPartsSubtotal');
+      const elLabor = document.getElementById('demoLaborSubtotal');
+      let totalPartsCost = calculatedItems.reduce((acc, it) => acc + (it.price * (it.quantity || 1)), 0);
+      let totalLaborCost = calculatedItems.reduce((acc, it) => acc + (it.laborFee * (it.quantity || 1)), 0);
+      if (elParts) elParts.textContent = formatCurrency(totalPartsCost);
+      if (elLabor) elLabor.textContent = (totalLaborCost > 0 ? "+" : "") + formatCurrency(totalLaborCost);
+      renderThermalSlip(calculatedItems, grandTotal);
+    }
+
+    function renderThermalSlip(items, total) {
+      const c = countryCatalogs[currentCountryKey];
+      const t = c.i18n;
+      const veh = c.vehicles[currentVehKey] || Object.values(c.vehicles)[0];
+      const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+      let lines = [];
+      lines.push("========================================");
+      const centerLine = (str) => {
+        const s = String(str || '').substring(0, 40);
+        const pad = Math.max(0, Math.floor((40 - s.length) / 2));
+        return ' '.repeat(pad) + s;
+      };
+      lines.push(centerLine(c.workshopName));
+      lines.push(centerLine(c.receiptHeader));
+      lines.push("========================================");
+      lines.push(padLine(t.receiptNo, "WO-00042"));
+      lines.push(padLine(t.dateTime, now));
+      lines.push(padLine(t.plateNo, `${veh.plate} (${veh.name})`));
+      lines.push(padLine(t.customer, veh.owner));
+      lines.push(padLine(t.paymentMethod, t.paymentCash));
+      lines.push("----------------------------------------");
+      lines.push(padLine(t.itemActionHeader, t.subtotalHeader));
+      lines.push("----------------------------------------");
+
+      items.forEach(it => {
+        const actLabel = it.isInstalled ? t.installTag : t.retailTag;
+        lines.push(padLine(`${it.name.substring(0, 18)} [${actLabel}]`, formatCurrency(it.subtotal)));
+        if (it.isInstalled && it.laborFee > 0) {
+          lines.push(padLine(`  ${t.partLabel}: ${formatCurrency(it.price)}`, `${t.laborLabel}: ${formatCurrency(it.laborFee)}`));
+        }
+      });
+
+      lines.push("----------------------------------------");
+      lines.push(padLine(t.totalAmount, formatCurrency(total)));
+      lines.push(padLine(t.cashTendered, formatCurrency(total)));
+      lines.push(padLine(t.changeDue, formatCurrency(0)));
+      lines.push("========================================");
+      lines.push(centerLine(t.thankYou));
+      lines.push(centerLine(c.receiptFooter));
+      lines.push("========================================");
+
+      document.getElementById('demoThermalSlip').textContent = lines.join("\n");
+    }
+
+    function simulateCheckout() {
+      const btn = document.getElementById('btnDemoCheckout');
+      const c = countryCatalogs[currentCountryKey];
+      btn.textContent = c.i18n.checkoutDone;
+      btn.className = "px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-400 text-slate-950 transition-all";
+      setTimeout(() => {
+        btn.textContent = c.i18n.checkoutBtn;
+        btn.className = "px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition-all shadow-md shadow-emerald-500/20";
+      }, 2500);
+    }
+
+    function copyQuickstart() {
+      const cmd = document.getElementById('quickstartCmd').textContent;
+      navigator.clipboard.writeText(cmd).then(() => {
+        const text = document.getElementById('copyQuickstartText');
+        text.textContent = 'Copied!';
+        setTimeout(() => { text.textContent = 'Copy'; }, 2000);
+      });
+    }
+
+    // Initialize on page load with US as default
+    setCountryMarket('US');
+  </script>
+
+</body>
+</html>
