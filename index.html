@@ -160,25 +160,22 @@
     <section id="interactive-pos" class="py-20 border-b border-[rgba(255,255,255,0.06)] bg-panel/40">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-          <div class="max-w-2xl">
-            <div class="text-xs font-mono text-sky-400 uppercase tracking-widest font-semibold mb-2">Live Interactive Simulator</div>
-            <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">
-              Test Dual-Tier Pricing on Any Market Fleet
-            </h2>
-            <p class="mt-3 text-sm sm:text-base text-slate-400 leading-relaxed">
-              Motorcycle models and labor rates differ across countries. Switch between <b>Global / Americas / EU</b> and <b>Southeast Asia (ASEAN)</b> below to test how vehicle displacement tiers automatically adjust labor pricing.
-            </p>
+        <div class="mb-10">
+          <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+            <div class="max-w-3xl">
+              <div class="text-xs font-mono text-sky-400 uppercase tracking-widest font-semibold mb-2">Country-Specific Fleet Simulator</div>
+              <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">
+                Localized Down to the Exact Fleet &amp; Currency of Each Country
+              </h2>
+              <p class="mt-3 text-sm sm:text-base text-slate-400 leading-relaxed">
+                Motorcycle fleets, registration plates, and repair complexities differ fundamentally across borders. Select any country below to see BengkelStack adapt its vehicle catalog, local currency formatting, and labor matrices:
+              </p>
+            </div>
           </div>
 
-          <!-- Region / Market Preset Switcher -->
-          <div class="flex items-center gap-2 p-1.5 rounded-xl bg-surface border border-[rgba(255,255,255,0.08)] self-start md:self-auto">
-            <button onclick="setMarketRegion('global')" id="btnRegionGlobal" class="px-3.5 py-2 rounded-lg text-xs font-mono font-medium transition-all bg-sky-500 text-slate-950 font-bold shadow-sm">
-              Global / Americas / EU ($ USD)
-            </button>
-            <button onclick="setMarketRegion('asean')" id="btnRegionAsean" class="px-3.5 py-2 rounded-lg text-xs font-mono font-medium transition-all text-slate-400 hover:text-white">
-              Southeast Asia / ASEAN (Rp IDR)
-            </button>
+          <!-- Country Selector Ribbon (8 Major Motorcycle Markets) -->
+          <div class="flex flex-wrap items-center gap-2 select-none" id="countryRibbon">
+            <!-- Dynamically populated with active flag indicators -->
           </div>
         </div>
 
@@ -653,31 +650,17 @@ Loading receipt stream...
 
   <!-- MULTI-MARKET JAVASCRIPT STATE ENGINE -->
   <script>
-    const marketCatalogs = {
-      global: {
-        name: "Global / Americas / EU",
-        currency: "$",
-        vehicles: {
-          scooter: { name: "Honda PCX 150", type: "Compact Scooter", plate: "CA-8821-X", owner: "Alex Turner" },
-          sport: { name: "Kawasaki Ninja 400", type: "Sport / Street", plate: "TX-4920-K", owner: "Sarah Jenkins" },
-          naked: { name: "Yamaha MT-07", type: "Twin Middleweight", plate: "NY-7104-M", owner: "David Ross" },
-          cruiser: { name: "Honda Rebel 500", type: "Cruiser / Twin", plate: "FL-3391-R", owner: "Michael Vance" }
-        },
-        items: {
-          oil: { code: "OIL-SYN-10W40", name: "Full Synthetic 10W-40 (1L)", price: 14.50, installFees: { scooter: 5.00, sport: 8.00, naked: 8.00, cruiser: 10.00 } },
-          pad: { code: "BRK-SINT-F", name: "Sintered Front Brake Pads", price: 32.00, installFees: { scooter: 12.00, sport: 18.00, naked: 18.00, cruiser: 20.00 } },
-          chain: { code: "DRV-CHAIN-520", name: "520 O-Ring Chain & Sprockets", price: 85.00, installFees: { scooter: 25.00, sport: 45.00, naked: 40.00, cruiser: 50.00 } },
-          tuneup: { code: "SVC-MAINT", name: "Complete Safety Inspection", price: 0.00, installFees: { scooter: 35.00, sport: 60.00, naked: 50.00, cruiser: 65.00 } }
-        },
-        defaultCart: [
-          { id: 'oil', action: 'installed' },
-          { id: 'pad', action: 'installed' },
-          { id: 'chain', action: 'takeaway' }
-        ]
-      },
-      asean: {
-        name: "Southeast Asia (ASEAN)",
+    const countryCatalogs = {
+      ID: {
+        code: "ID",
+        name: "Indonesia",
+        flag: "🇮🇩",
         currency: "Rp",
+        currencyCode: "IDR",
+        decimalPlaces: 0,
+        workshopName: "BENGKEL MOTOR JAYA ABADI",
+        receiptHeader: "LAYANAN SERVIS & SUKU CADANG",
+        receiptFooter: "Garansi Servis 7 Hari / 500 KM",
         vehicles: {
           beat: { name: "Honda Beat FI", type: "Entry Scooter 110cc", plate: "B 1234 XYZ", owner: "Budi Santoso" },
           vario: { name: "Honda Vario 125", type: "Mid Scooter 125cc", plate: "D 5678 AB", owner: "Rian Hidayat" },
@@ -695,43 +678,248 @@ Loading receipt stream...
           { id: 'pad', action: 'installed' },
           { id: 'belt', action: 'takeaway' }
         ]
+      },
+      VN: {
+        code: "VN",
+        name: "Vietnam",
+        flag: "🇻🇳",
+        currency: "₫",
+        currencyCode: "VND",
+        decimalPlaces: 0,
+        workshopName: "TIEM SUA XE MAY SAI GON",
+        receiptHeader: "DICH VU SUA CHUA & PHU TUNG",
+        receiptFooter: "Bao Hanh 7 Ngay / 500 KM",
+        vehicles: {
+          wave: { name: "Honda Wave Alpha", type: "Underbone Commuter 110cc", plate: "29-A1 123.45", owner: "Nguyen Van Minh" },
+          lead: { name: "Honda Lead 125", type: "City Scooter 125cc", plate: "59-B1 678.90", owner: "Tran Thi Hoa" },
+          airblade: { name: "Honda Air Blade 160", type: "Sport Scooter 160cc", plate: "43-C1 999.88", owner: "Le Hoang Nam" },
+          exciter: { name: "Yamaha Exciter 155", type: "Manual Clutch 155cc", plate: "72-D1 555.22", owner: "Pham Duc Anh" }
+        },
+        items: {
+          oil: { code: "OIL-CASTROL", name: "Dau Nhot Castrol Power1 0.8L", price: 115000, installFees: { wave: 15000, lead: 20000, airblade: 25000, exciter: 25000 } },
+          pad: { code: "BRK-PAD-OEM", name: "Bo Ma Phanh Truoc Nissin", price: 140000, installFees: { wave: 25000, lead: 35000, airblade: 40000, exciter: 45000 } },
+          belt: { code: "DRV-BELT-BANDO", name: "Day Curoa Bando Nhat Ban", price: 320000, installFees: { wave: 40000, lead: 60000, airblade: 80000, exciter: 0 } },
+          tuneup: { code: "SVC-BAODUONG", name: "Bao Duong Toan Bo Xe & Noi", price: 0, installFees: { wave: 120000, lead: 160000, airblade: 200000, exciter: 220000 } }
+        },
+        defaultCart: [
+          { id: 'oil', action: 'installed' },
+          { id: 'pad', action: 'installed' },
+          { id: 'belt', action: 'takeaway' }
+        ]
+      },
+      TH: {
+        code: "TH",
+        name: "Thailand",
+        flag: "🇹🇭",
+        currency: "฿",
+        currencyCode: "THB",
+        decimalPlaces: 0,
+        workshopName: "BANGKOK MOTO SERVICE",
+        receiptHeader: "REPAIR & GENUINE PARTS",
+        receiptFooter: "Warranty 7 Days / 500 KM",
+        vehicles: {
+          wave110: { name: "Honda Wave 110i", type: "Commuter Moped 110cc", plate: "1กข 1234", owner: "Somchai Prasert" },
+          click160: { name: "Honda Click 160", type: "Compact Scooter 160cc", plate: "2หม 5678", owner: "Anan Suksom" },
+          filano: { name: "Yamaha Grand Filano", type: "Hybrid Scooter 125cc", plate: "3กร 9901", owner: "Kanya Rattanaporn" },
+          forza350: { name: "Honda Forza 350", type: "Heavy Touring 330cc", plate: "9สน 8888", owner: "Chatchai Wongsawat" }
+        },
+        items: {
+          oil: { code: "OIL-MOTUL-SCOOT", name: "Motul Scooter LE 10W-30 (0.8L)", price: 190, installFees: { wave110: 40, click160: 50, filano: 50, forza350: 80 } },
+          pad: { code: "BRK-PAD-BKK", name: "Front Disc Brake Pads Genuine", price: 280, installFees: { wave110: 60, click160: 80, filano: 80, forza350: 150 } },
+          belt: { code: "DRV-BELT-MITSUB", name: "OEM Drive Belt Mitsuboshi", price: 650, installFees: { wave110: 100, click160: 150, filano: 150, forza350: 300 } },
+          tuneup: { code: "SVC-THAI-MAINT", name: "Periodic Maintenance Service", price: 0, installFees: { wave110: 200, click160: 300, filano: 300, forza350: 500 } }
+        },
+        defaultCart: [
+          { id: 'oil', action: 'installed' },
+          { id: 'pad', action: 'installed' },
+          { id: 'belt', action: 'takeaway' }
+        ]
+      },
+      PH: {
+        code: "PH",
+        name: "Philippines",
+        flag: "🇵🇭",
+        currency: "₱",
+        currencyCode: "PHP",
+        decimalPlaces: 2,
+        workshopName: "MANILA MOTORCYCLE CLINIC",
+        receiptHeader: "REPAIR SERVICE & MOTOR PARTS",
+        receiptFooter: "Service Warranty 7 Days / 500 KM",
+        vehicles: {
+          mio: { name: "Yamaha Mio i125", type: "Automatic Scooter 125cc", plate: "NA 1234", owner: "Juan Dela Cruz" },
+          click: { name: "Honda Click 125i", type: "Liquid Cooled 125cc", plate: "ND 5678", owner: "Maria Santos" },
+          aerox: { name: "Yamaha Aerox 155", type: "Sport Maxi Scooter 155cc", plate: "NF 9012", owner: "Ramon Bautista" },
+          raider: { name: "Suzuki Raider R150", type: "Underbone DOHC 150cc", plate: "NC 8888", owner: "Angelo Reyes" }
+        },
+        items: {
+          oil: { code: "OIL-YAMALUBE", name: "Yamalube 4T AT 10W-40 (800ml)", price: 295.00, installFees: { mio: 50.00, click: 60.00, aerox: 80.00, raider: 70.00 } },
+          pad: { code: "BRK-PAD-BENDIX", name: "Bendix Front Brake Pads MD32", price: 380.00, installFees: { mio: 80.00, click: 100.00, aerox: 120.00, raider: 120.00 } },
+          belt: { code: "DRV-BELT-GATES", name: "Gates Powerlink CVT V-Belt", price: 850.00, installFees: { mio: 150.00, click: 200.00, aerox: 250.00, raider: 0 } },
+          tuneup: { code: "SVC-OVERHAUL-CVT", name: "CVT Cleaning & FI System Flush", price: 0.00, installFees: { mio: 250.00, click: 300.00, aerox: 400.00, raider: 350.00 } }
+        },
+        defaultCart: [
+          { id: 'oil', action: 'installed' },
+          { id: 'pad', action: 'installed' },
+          { id: 'belt', action: 'takeaway' }
+        ]
+      },
+      MY: {
+        code: "MY",
+        name: "Malaysia",
+        flag: "🇲🇾",
+        currency: "RM",
+        currencyCode: "MYR",
+        decimalPlaces: 2,
+        workshopName: "BENGKEL MOTOR KUALA LUMPUR",
+        receiptHeader: "SERVIS MOTOR & ALAT GANTI",
+        receiptFooter: "Jaminan Servis 7 Hari / 500 KM",
+        vehicles: {
+          y15: { name: "Yamaha Y15ZR (Y-Suku)", type: "Moped Sport 150cc", plate: "W 1234 A", owner: "Mohd Hafiz" },
+          rsx: { name: "Honda RS-X 150", type: "DOHC 6-Speed 150cc", plate: "B 5678 C", owner: "Azman Ismail" },
+          nvx: { name: "Yamaha NVX 155", type: "Maxi Automatic 155cc", plate: "J 9012 D", owner: "Khairul Nizam" },
+          wave: { name: "Honda Wave Alpha", type: "Keluarga Moped 110cc", plate: "P 8888 E", owner: "Tan Ah Hock" }
+        },
+        items: {
+          oil: { code: "OIL-SHELL-AX7", name: "Shell Advance AX7 10W-40 (1L)", price: 38.00, installFees: { y15: 8.00, rsx: 8.00, nvx: 10.00, wave: 5.00 } },
+          pad: { code: "BRK-PAD-NISSIN", name: "Nissin Genuine Brake Pad Set", price: 45.00, installFees: { y15: 12.00, rsx: 15.00, nvx: 18.00, wave: 10.00 } },
+          chain: { code: "DRV-RK-CHAIN", name: "RK Takasago 428 O-Ring Chain", price: 110.00, installFees: { y15: 25.00, rsx: 25.00, nvx: 40.00, wave: 20.00 } },
+          tuneup: { code: "SVC-TUNE-KL", name: "Servis Karburetor / FI Tuning", price: 0.00, installFees: { y15: 35.00, rsx: 40.00, nvx: 50.00, wave: 25.00 } }
+        },
+        defaultCart: [
+          { id: 'oil', action: 'installed' },
+          { id: 'pad', action: 'installed' },
+          { id: 'chain', action: 'takeaway' }
+        ]
+      },
+      IN: {
+        code: "IN",
+        name: "India",
+        flag: "🇮🇳",
+        currency: "₹",
+        currencyCode: "INR",
+        decimalPlaces: 0,
+        workshopName: "MUMBAI TWO-WHEELER SERVICE",
+        receiptHeader: "BIKE REPAIR & SPARE PARTS",
+        receiptFooter: "Service Warranty 7 Days / 500 KM",
+        vehicles: {
+          splendor: { name: "Hero Splendor Plus", type: "Commuter 100cc", plate: "MH 01 AB 1234", owner: "Rajesh Kumar" },
+          activa: { name: "Honda Activa 6G", type: "Automatic Scooter 110cc", plate: "DL 04 CD 5678", owner: "Amit Sharma" },
+          pulsar: { name: "Bajaj Pulsar 150", type: "Sport Commuter 150cc", plate: "KA 05 EF 9012", owner: "Suresh Patil" },
+          bullet: { name: "Royal Enfield Classic 350", type: "Cruiser Single 349cc", plate: "TN 09 GH 8888", owner: "Vikramaditya Rao" }
+        },
+        items: {
+          oil: { code: "OIL-SERVO-4T", name: "Servo 4T Synth 20W-40 (900ml)", price: 360, installFees: { splendor: 50, activa: 60, pulsar: 70, bullet: 100 } },
+          pad: { code: "BRK-PAD-KBX", name: "KBX Front Disc Brake Pad Kit", price: 420, installFees: { splendor: 80, activa: 90, pulsar: 120, bullet: 150 } },
+          chain: { code: "DRV-ROLON-CHAIN", name: "Rolon Brass Chain & Sprocket", price: 1250, installFees: { splendor: 150, activa: 200, pulsar: 250, bullet: 350 } },
+          tuneup: { code: "SVC-IN-GENERAL", name: "Complete Periodic Maintenance", price: 0, installFees: { splendor: 300, activa: 350, pulsar: 450, bullet: 650 } }
+        },
+        defaultCart: [
+          { id: 'oil', action: 'installed' },
+          { id: 'pad', action: 'installed' },
+          { id: 'chain', action: 'takeaway' }
+        ]
+      },
+      US: {
+        code: "US",
+        name: "United States",
+        flag: "🇺🇸",
+        currency: "$",
+        currencyCode: "USD",
+        decimalPlaces: 2,
+        workshopName: "AUSTIN MOTO GARAGE",
+        receiptHeader: "PREMIUM MOTORCYCLE REPAIR",
+        receiptFooter: "30 Days / 500 Miles Warranty",
+        vehicles: {
+          ninja: { name: "Kawasaki Ninja 400", type: "Sport / Parallel Twin", plate: "TX-4920-K", owner: "Sarah Jenkins" },
+          rebel: { name: "Honda Rebel 500", type: "Cruiser / Twin 471cc", plate: "FL-3391-R", owner: "Michael Vance" },
+          mt07: { name: "Yamaha MT-07", type: "Naked Middleweight 689cc", plate: "NY-7104-M", owner: "David Ross" },
+          harley: { name: "Harley Sportster Iron 883", type: "V-Twin Cruiser 883cc", plate: "CA-8821-X", owner: "Alex Turner" }
+        },
+        items: {
+          oil: { code: "OIL-MOTUL-7100", name: "Motul 7100 4T 10W-40 Synthetic (1L)", price: 18.50, installFees: { ninja: 15.00, rebel: 15.00, mt07: 18.00, harley: 25.00 } },
+          pad: { code: "BRK-EBC-HH", name: "EBC Double-H Sintered Front Pads", price: 42.00, installFees: { ninja: 25.00, rebel: 25.00, mt07: 35.00, harley: 45.00 } },
+          chain: { code: "DRV-DID-520VX3", name: "D.I.D 520VX3 X-Ring Chain Set", price: 135.00, installFees: { ninja: 65.00, rebel: 60.00, mt07: 75.00, harley: 95.00 } },
+          tuneup: { code: "SVC-US-TUNE", name: "Complete Multi-Point Safety Check", price: 0.00, installFees: { ninja: 85.00, rebel: 85.00, mt07: 95.00, harley: 120.00 } }
+        },
+        defaultCart: [
+          { id: 'oil', action: 'installed' },
+          { id: 'pad', action: 'installed' },
+          { id: 'chain', action: 'takeaway' }
+        ]
+      },
+      GB: {
+        code: "GB",
+        name: "United Kingdom",
+        flag: "🇬🇧",
+        currency: "£",
+        currencyCode: "GBP",
+        decimalPlaces: 2,
+        workshopName: "LONDON MOTORCYCLE WORKS",
+        receiptHeader: "MOT & SERVICE WORKSHOP",
+        receiptFooter: "30 Days Workshop Guarantee",
+        vehicles: {
+          pcx: { name: "Honda PCX 125", type: "Commuter Scooter 125cc", plate: "LN21 XYZ", owner: "Oliver Smith" },
+          mt07: { name: "Yamaha MT-07", type: "Twin Middleweight 689cc", plate: "BX19 ABC", owner: "James Wilson" },
+          striple: { name: "Triumph Street Triple 765", type: "Inline-Triple 765cc", plate: "WM22 DEF", owner: "George Clarke" },
+          gs: { name: "BMW R1250 GS", type: "Boxer Adventure 1254cc", plate: "KW23 GHI", owner: "Edward Taylor" }
+        },
+        items: {
+          oil: { code: "OIL-SILKOLENE", name: "Fuchs Silkolene Pro 4 10W-40 (1L)", price: 14.00, installFees: { pcx: 10.00, mt07: 15.00, striple: 20.00, gs: 25.00 } },
+          pad: { code: "BRK-BREMBO-CC", name: "Brembo Carbon Ceramic Brake Pads", price: 36.00, installFees: { pcx: 18.00, mt07: 25.00, striple: 35.00, gs: 40.00 } },
+          chain: { code: "DRV-RK-525XSO", name: "RK 525XSO RX-Ring Chain Kit", price: 115.00, installFees: { pcx: 30.00, mt07: 55.00, striple: 65.00, gs: 80.00 } },
+          tuneup: { code: "SVC-UK-ANNUAL", name: "Annual Minor Service & MOT Prep", price: 0.00, installFees: { pcx: 65.00, mt07: 85.00, striple: 110.00, gs: 135.00 } }
+        },
+        defaultCart: [
+          { id: 'oil', action: 'installed' },
+          { id: 'pad', action: 'installed' },
+          { id: 'chain', action: 'takeaway' }
+        ]
       }
     };
 
-    let currentMarketKey = 'global';
-    let currentVehKey = 'scooter';
+    let currentCountryKey = 'US';
+    let currentVehKey = 'ninja';
     let demoCart = [];
 
     function formatCurrency(val) {
-      const cur = marketCatalogs[currentMarketKey].currency;
-      if (cur === "$") {
-        return "$" + val.toFixed(2);
+      const c = countryCatalogs[currentCountryKey];
+      if (c.decimalPlaces === 0) {
+        return c.currency + " " + Math.round(val).toLocaleString();
       } else {
-        return "Rp " + Math.round(val).toLocaleString();
+        return c.currency + val.toFixed(c.decimalPlaces);
       }
     }
 
-    function setMarketRegion(marketKey) {
-      currentMarketKey = marketKey;
-      const mkt = marketCatalogs[marketKey];
+    function renderCountryRibbon() {
+      const ribbon = document.getElementById('countryRibbon');
+      ribbon.innerHTML = Object.entries(countryCatalogs).map(([code, c]) => {
+        const isActive = code === currentCountryKey;
+        const activeClass = isActive 
+          ? "bg-sky-500 text-slate-950 font-bold border-sky-400 shadow-md shadow-sky-500/20" 
+          : "bg-surface hover:bg-surface-hover text-slate-300 border-[rgba(255,255,255,0.08)] hover:text-white";
+        return `
+          <button onclick="setCountryMarket('${code}')" class="px-3.5 py-2 rounded-xl text-xs font-medium border flex items-center gap-2 whitespace-nowrap transition-all ${activeClass}">
+            <span class="text-base">${c.flag}</span>
+            <span>${c.name}</span>
+            <span class="text-[10px] opacity-75 font-mono">(${c.currency} ${c.currencyCode})</span>
+          </button>
+        `;
+      }).join('');
+    }
 
-      // Update switcher buttons
-      document.getElementById('btnRegionGlobal').className = marketKey === 'global'
-        ? "px-3.5 py-2 rounded-lg text-xs font-mono font-medium transition-all bg-sky-500 text-slate-950 font-bold shadow-sm"
-        : "px-3.5 py-2 rounded-lg text-xs font-mono font-medium transition-all text-slate-400 hover:text-white";
+    function setCountryMarket(countryCode) {
+      currentCountryKey = countryCode;
+      const c = countryCatalogs[countryCode];
+      renderCountryRibbon();
 
-      document.getElementById('btnRegionAsean').className = marketKey === 'asean'
-        ? "px-3.5 py-2 rounded-lg text-xs font-mono font-medium transition-all bg-sky-500 text-slate-950 font-bold shadow-sm"
-        : "px-3.5 py-2 rounded-lg text-xs font-mono font-medium transition-all text-slate-400 hover:text-white";
+      document.getElementById('terminalTitle').textContent = `bengkelstack-pos:8089 (${c.name} Market Fleet)`;
 
-      document.getElementById('terminalTitle').textContent = `bengkelstack-pos:8089 (${mkt.name} Fleet)`;
-
-      // Set default vehicle for this market
-      currentVehKey = Object.keys(mkt.vehicles)[0];
+      // Set default vehicle for this country
+      currentVehKey = Object.keys(c.vehicles)[0];
 
       // Populate vehicle buttons
       const vehGrid = document.getElementById('vehButtonGrid');
-      vehGrid.innerHTML = Object.entries(mkt.vehicles).map(([k, v]) => `
+      vehGrid.innerHTML = Object.entries(c.vehicles).map(([k, v]) => `
         <button onclick="setDemoVehicle('${k}')" id="btnVeh_${k}" class="p-2.5 rounded-lg border text-left transition-all ${k === currentVehKey ? 'border-sky-500/50 bg-sky-500/10 text-white' : 'border-[rgba(255,255,255,0.08)] bg-white/[0.02] hover:bg-white/[0.04] text-slate-300'}">
           <div class="font-bold text-xs truncate">${v.name}</div>
           <div class="text-[10px] text-slate-400 truncate mt-0.5">${v.type}</div>
@@ -741,21 +929,21 @@ Loading receipt stream...
 
       // Populate quick-add item buttons
       const itemGrid = document.getElementById('quickAddButtonGrid');
-      itemGrid.innerHTML = Object.entries(mkt.items).map(([k, v]) => `
+      itemGrid.innerHTML = Object.entries(c.items).map(([k, v]) => `
         <button onclick="addDemoItem('${k}')" class="px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-hover border border-[rgba(255,255,255,0.08)] text-slate-200 transition-colors">
           + ${v.name} (${formatCurrency(v.price)})
         </button>
       `).join('');
 
-      // Reset cart to default
-      demoCart = JSON.parse(JSON.stringify(mkt.defaultCart));
+      // Reset cart to this country's default
+      demoCart = JSON.parse(JSON.stringify(c.defaultCart));
       renderDemoCart();
     }
 
     function setDemoVehicle(key) {
       currentVehKey = key;
-      const mkt = marketCatalogs[currentMarketKey];
-      Object.keys(mkt.vehicles).forEach(k => {
+      const c = countryCatalogs[currentCountryKey];
+      Object.keys(c.vehicles).forEach(k => {
         const btn = document.getElementById(`btnVeh_${k}`);
         if (btn) {
           btn.className = k === key
@@ -786,10 +974,19 @@ Loading receipt stream...
       renderDemoCart();
     }
 
+    function padLine(left, right, width = 40) {
+      const l = String(left || '');
+      const r = String(right || '');
+      if (l.length + r.length >= width) {
+        return (l.substring(0, width - r.length - 1) + ' ' + r).substring(0, width);
+      }
+      return l + ' '.repeat(width - l.length - r.length) + r;
+    }
+
     function renderDemoCart() {
       const container = document.getElementById('demoCartList');
-      const mkt = marketCatalogs[currentMarketKey];
-      const veh = mkt.vehicles[currentVehKey] || Object.values(mkt.vehicles)[0];
+      const c = countryCatalogs[currentCountryKey];
+      const veh = c.vehicles[currentVehKey] || Object.values(c.vehicles)[0];
       let grandTotal = 0;
 
       document.getElementById('demoItemCount').textContent = `${demoCart.length} Items`;
@@ -806,7 +1003,7 @@ Loading receipt stream...
       }
 
       const calculatedItems = demoCart.map((it, idx) => {
-        const itemData = mkt.items[it.id] || Object.values(mkt.items)[0];
+        const itemData = c.items[it.id] || Object.values(c.items)[0];
         const isInstalled = it.action === 'installed';
         const laborFee = isInstalled ? (itemData.installFees[currentVehKey] || 0) : 0;
         const subtotal = itemData.price + laborFee;
@@ -859,24 +1056,15 @@ Loading receipt stream...
       renderThermalSlip(calculatedItems, grandTotal);
     }
 
-    function padLine(left, right, width = 40) {
-      const l = String(left || '');
-      const r = String(right || '');
-      if (l.length + r.length >= width) {
-        return (l.substring(0, width - r.length - 1) + ' ' + r).substring(0, width);
-      }
-      return l + ' '.repeat(width - l.length - r.length) + r;
-    }
-
     function renderThermalSlip(items, total) {
-      const mkt = marketCatalogs[currentMarketKey];
-      const veh = mkt.vehicles[currentVehKey] || Object.values(mkt.vehicles)[0];
+      const c = countryCatalogs[currentCountryKey];
+      const veh = c.vehicles[currentVehKey] || Object.values(c.vehicles)[0];
       const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
       let lines = [];
       lines.push("========================================");
-      lines.push("        BENGKELSTACK WORKSHOP OS        ");
-      lines.push("        SERVICE & REPAIR CENTER         ");
+      lines.push(padLine("       " + c.workshopName.substring(0, 26), ""));
+      lines.push(padLine("       " + c.receiptHeader.substring(0, 26), ""));
       lines.push("========================================");
       lines.push(padLine("Receipt No:", "WO-00042"));
       lines.push(padLine("Date/Time:", now));
@@ -900,8 +1088,8 @@ Loading receipt stream...
       lines.push(padLine("CASH TENDERED:", formatCurrency(total)));
       lines.push(padLine("CHANGE DUE:", formatCurrency(0)));
       lines.push("========================================");
-      lines.push("       Thank you for your visit!        ");
-      lines.push("    Service Warranty 7 Days / 500 KM    ");
+      lines.push(padLine("       Thank you for your visit!", ""));
+      lines.push(padLine("    " + c.receiptFooter.substring(0, 32), ""));
       lines.push("========================================");
 
       document.getElementById('demoThermalSlip').textContent = lines.join("\n");
@@ -917,8 +1105,8 @@ Loading receipt stream...
       }, 2500);
     }
 
-    // Initialize on page load
-    setMarketRegion('global');
+    // Initialize on page load with US as default
+    setCountryMarket('US');
   </script>
 
 </body>
