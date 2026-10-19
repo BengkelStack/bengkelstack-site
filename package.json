@@ -5,8 +5,9 @@
   "description": "Public landing gateway, invoice OCR simulator, and technical specifications portal for bengkelstack.com",
   "license": "MIT",
   "scripts": {
-    "test": "node tests/test_cloud_frontend_whitebox.js && node tests/test_site_whitebox.js",
+    "test": "node tests/test_cloud_frontend_whitebox.js && node tests/test_auth_behavior.js && node tests/test_site_whitebox.js",
     "test:cloud": "node tests/test_cloud_frontend_whitebox.js",
+    "test:auth": "node tests/test_auth_behavior.js",
     "test:site": "node tests/test_site_whitebox.js",
     "serve": "python -m http.server 8080"
   }

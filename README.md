@@ -18,7 +18,7 @@ Public landing gateway, interactive invoice OCR simulator, and technical specifi
 ## Quickstart
 
 ```bash
-# Run the verification suite (23 checks, real-source assertions)
+# Run the verification suite (32 checks: source contracts, auth behaviour, POS engine)
 npm test
 
 # Local preview server
@@ -33,6 +33,21 @@ Open `http://localhost:8080` in any web browser.
 `bengkelstack-core`. Without the core engine they stay honest and show an error.
 Append `?demo=1` to opt into the offline mock session (`bk_at_mock_*` token);
 `admin.html` and `owner.html` refuse mock tokens unless that flag is present.
+
+### API-backed pages
+
+CSP allows only same-origin calls plus `https://api.bengkelstack.com`, so
+`/api/v1/*` must be served from the same origin as these pages:
+
+- **Local:** serve the folder from `bengkelstack-core` (it mounts statics + API),
+  or add a proxy in front (`/api/` → core engine, port 8089).
+- **Cloudflare Pages:** Pages `_redirects` cannot proxy to an origin — use a
+  Worker route (`/api/*` → core engine) or serve both from one origin.
+
+Degrade behaviour is labelled, never silent: the SuperAdmin table shows
+`LIVE · /api/v1/admin/tenants`, `DEMO DATA · API unavailable`, or
+`LOCAL ONLY · PATCH failed`. Workshop settings fall back to
+`Saved locally (no API)` via `bk_owner_settings`.
 
 ---
 

@@ -176,19 +176,19 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div>
           <label class="block text-xs font-medium text-slate-300 mb-1">WhatsApp Business Contact</label>
-          <input type="text" value="085158882755" class="w-full px-3.5 py-2.5 rounded-lg bg-surface border border-white/[0.08] text-sm text-white focus:outline-none focus:border-sky-500 font-sans">
+          <input type="text" id="setWaContact" value="085158882755" class="w-full px-3.5 py-2.5 rounded-lg bg-surface border border-white/[0.08] text-sm text-white focus:outline-none focus:border-sky-500 font-sans">
         </div>
         <div>
           <label class="block text-xs font-medium text-slate-300 mb-1">Currency Code & Symbol</label>
-          <input type="text" value="IDR (Rp)" readonly class="w-full px-3.5 py-2.5 rounded-lg bg-surface border border-white/[0.08] text-sm text-slate-400 font-mono">
+          <input type="text" id="setCurrency" value="IDR (Rp)" readonly class="w-full px-3.5 py-2.5 rounded-lg bg-surface border border-white/[0.08] text-sm text-slate-400 font-mono">
         </div>
         <div class="sm:col-span-2">
           <label class="block text-xs font-medium text-slate-300 mb-1">Thermal Receipt Header (Max 40 Columns)</label>
-          <input type="text" value="JAYA ABADI MOTOR - SPESIALIS INJEKSI & MATIC" class="w-full px-3.5 py-2.5 rounded-lg bg-surface border border-white/[0.08] text-xs font-mono text-white focus:outline-none focus:border-sky-500">
+          <input type="text" id="setReceiptHeader" value="JAYA ABADI MOTOR - SPESIALIS INJEKSI & MATIC" class="w-full px-3.5 py-2.5 rounded-lg bg-surface border border-white/[0.08] text-xs font-mono text-white focus:outline-none focus:border-sky-500">
         </div>
         <div class="sm:col-span-2">
           <label class="block text-xs font-medium text-slate-300 mb-1">Thermal Receipt Footer Note</label>
-          <input type="text" value="Garansi Servis 7 Hari / 500 KM. Terima Kasih." class="w-full px-3.5 py-2.5 rounded-lg bg-surface border border-white/[0.08] text-xs font-mono text-white focus:outline-none focus:border-sky-500">
+          <input type="text" id="setReceiptFooter" value="Garansi Servis 7 Hari / 500 KM. Terima Kasih." class="w-full px-3.5 py-2.5 rounded-lg bg-surface border border-white/[0.08] text-xs font-mono text-white focus:outline-none focus:border-sky-500">
         </div>
       </div>
 
@@ -270,11 +270,46 @@
       URL.revokeObjectURL(url);
     });
 
-    // Save Settings
-    document.getElementById('btnSaveSettings').addEventListener('click', () => {
+    // Workshop settings: real save first (API), explicit local fallback otherwise.
+    const SET_KEYS = ['setWaContact', 'setCurrency', 'setReceiptHeader', 'setReceiptFooter'];
+    const SETTINGS_STORE = 'bk_owner_settings';
+
+    function collectSettings() {
+      const out = {};
+      SET_KEYS.forEach((id) => { out[id] = document.getElementById(id).value; });
+      return out;
+    }
+
+    function applySettings(values) {
+      SET_KEYS.forEach((id) => {
+        if (values && typeof values[id] === 'string') document.getElementById(id).value = values[id];
+      });
+    }
+
+    try {
+      applySettings(JSON.parse(localStorage.getItem(SETTINGS_STORE) || 'null'));
+    } catch (e) {}
+
+    document.getElementById('btnSaveSettings').addEventListener('click', async () => {
       const btn = document.getElementById('btnSaveSettings');
-      btn.textContent = '✓ Saved Successfully';
-      setTimeout(() => btn.textContent = 'Save Settings', 2000);
+      const payload = collectSettings();
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/v1/workshop/settings', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('bk_auth_token') || ''}`
+          },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        btn.textContent = '✓ Synced to Cloud';
+      } catch (err) {
+        localStorage.setItem(SETTINGS_STORE, JSON.stringify(payload));
+        btn.textContent = 'Saved locally (no API)';
+      }
+      setTimeout(() => { btn.textContent = 'Save Settings'; btn.disabled = false; }, 2000);
     });
 
     // Logout

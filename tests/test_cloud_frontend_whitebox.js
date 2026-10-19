@@ -129,4 +129,30 @@ check('Shared storage key bk_auth_token used consistently', () => {
   });
 });
 
+// 11. Admin data path: live API first, labelled fallback, never silent
+check('admin.html loads tenants from /api/v1/admin/tenants with visible data-mode badge', () => {
+  assert.ok(admin.includes("fetch('/api/v1/admin/tenants'"), 'tenant API call missing');
+  assert.ok(admin.includes('loadTenants'), 'loadTenants missing');
+  assert.ok(admin.includes('dataModeBadge'), 'data mode badge missing');
+  assert.ok(admin.includes('DEMO DATA · API unavailable'), 'silent demo fallback (no label)');
+  assert.ok(admin.includes("method: 'PATCH'"), 'tenant mutation not persisted to API');
+  assert.ok(/btnConfirm\s*=\s*document\.getElementById\('btnModalConfirm'\)/.test(admin), 'confirm wired to wrong element');
+});
+
+// 12. Owner settings: real save with honest local fallback
+check('owner.html persists workshop settings (API first, bk_owner_settings fallback)', () => {
+  assert.ok(owner.includes("/api/v1/workshop/settings"), 'settings API call missing');
+  assert.ok(owner.includes("'bk_owner_settings'"), 'local settings store missing');
+  assert.ok(owner.includes('Saved locally (no API)'), 'silent settings save (no label)');
+  ['setWaContact', 'setCurrency', 'setReceiptHeader', 'setReceiptFooter'].forEach((id) => {
+    assert.ok(owner.includes(`id="${id}"`), `setting input ${id} missing`);
+  });
+});
+
+// 13. Line-ending discipline for a cross-platform repo
+check('.editorconfig pins LF to stop CRLF checksum drift', () => {
+  const ec = read('.editorconfig');
+  assert.ok(ec.includes('end_of_line = lf'), 'end_of_line not pinned to lf');
+});
+
 console.log(`\nALL ${passed} CLOUD FRONTEND WHITE-BOX CHECKS PASSED (real-source assertions)\n`);

@@ -157,6 +157,7 @@
       <!-- Table Footer / Pagination -->
       <div class="p-4 border-t border-white/[0.08] flex items-center justify-between text-xs text-slate-400 font-mono">
         <span id="paginationInfo">Showing 1 to 4 of 4 workshops</span>
+        <span id="dataModeBadge" class="px-2 py-0.5 rounded border border-white/[0.08] text-[10px]">CONNECTING</span>
         <div class="flex gap-2">
           <button class="px-2.5 py-1 rounded bg-surface border border-white/[0.08] text-slate-400 hover:text-white disabled:opacity-40" disabled>Previous</button>
           <button class="px-2.5 py-1 rounded bg-surface border border-white/[0.08] text-slate-400 hover:text-white disabled:opacity-40" disabled>Next</button>
@@ -224,6 +225,65 @@
     const modalReason = document.getElementById('modalReasonInput');
     const btnCancel = document.getElementById('btnModalCancel');
     const btnConfirm = document.getElementById('btnModalConfirm');
+    const dataModeBadge = document.getElementById('dataModeBadge');
+
+    const authHeaders = () => ({
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('bk_auth_token') || ''}`
+    });
+
+    function setBadge(mode, note) {
+      const styles = {
+        LIVE: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10',
+        DEMO: 'text-amber-400 border-amber-500/30 bg-amber-500/10',
+        LOCAL: 'text-rose-400 border-rose-500/30 bg-rose-500/10'
+      };
+      dataModeBadge.className = `px-2 py-0.5 rounded border text-[10px] ${styles[mode] || styles.DEMO}`;
+      dataModeBadge.textContent = note;
+      dataModeBadge.title = note;
+    }
+
+    // Tenants: live API first; the static seed set is only a labelled fallback.
+    const normalizeTenant = (t) => ({
+      id: t.id,
+      slug: t.slug,
+      name: t.name,
+      country: t.country ?? t.country_code ?? '—',
+      plan: t.plan ?? 'FREE',
+      sync: t.sync ?? t.last_sync ?? '—',
+      status: t.status ?? 'ACTIVE'
+    });
+
+    let dataMode = 'DEMO';
+
+    async function loadTenants() {
+      setBadge('DEMO', 'CONNECTING…');
+      try {
+        const res = await fetch('/api/v1/admin/tenants', { headers: authHeaders() });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        const rows = json.data ?? json.tenants ?? json;
+        if (!Array.isArray(rows) || rows.length === 0) throw new Error('empty tenant payload');
+        tenants = rows.map(normalizeTenant);
+        dataMode = 'LIVE';
+        setBadge('LIVE', `LIVE · /api/v1/admin/tenants`);
+      } catch (err) {
+        tenants = tenants.map(normalizeTenant);
+        dataMode = 'DEMO';
+        setBadge('DEMO', 'DEMO DATA · API unavailable');
+      }
+      renderTable();
+    }
+
+    async function patchTenant(id, body) {
+      const res = await fetch(`/api/v1/admin/tenants/${id}`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    }
 
     function renderTable() {
       // Clear rows safely without innerHTML
@@ -327,19 +387,27 @@
       modal.classList.add('hidden');
     });
 
-    btnConfirm.addEventListener('click', () => {
+    btnConfirm.addEventListener('click', async () => {
       if (!selectedTenantId) return;
       const target = tenants.find(t => t.id === selectedTenantId);
       if (target) {
-        if (modalAction.value === 'SUSPEND') {
-          target.status = 'SUSPENDED';
-          target.sync = 'Cutoff';
-        } else if (modalAction.value === 'ACTIVATE') {
-          target.status = 'ACTIVE';
-          target.sync = 'Just now';
-        } else if (modalAction.value === 'UPGRADE_PRO') {
-          target.plan = 'PRO';
-          target.status = 'ACTIVE';
+        const PATCH_BODY = {
+          SUSPEND: { status: 'SUSPENDED', sync: 'Cutoff' },
+          ACTIVATE: { status: 'ACTIVE', sync: 'Just now' },
+          UPGRADE_PRO: { plan: 'PRO', status: 'ACTIVE' }
+        };
+        const body = PATCH_BODY[modalAction.value];
+        if (body) {
+          Object.assign(target, body);
+          // Server is the source of truth; local row update never masks a failed write.
+          if (dataMode === 'LIVE') {
+            try {
+              await patchTenant(selectedTenantId, body);
+            } catch (err) {
+              dataMode = 'LOCAL';
+              setBadge('LOCAL', `LOCAL ONLY · PATCH failed (${err.message})`);
+            }
+          }
         }
       }
       modal.classList.add('hidden');
@@ -348,7 +416,7 @@
 
     searchInput.addEventListener('input', renderTable);
     statusFilter.addEventListener('change', renderTable);
-    document.getElementById('btnRefresh').addEventListener('click', renderTable);
+    document.getElementById('btnRefresh').addEventListener('click', loadTenants);
 
     document.getElementById('btnLogout').addEventListener('click', () => {
       localStorage.removeItem('bk_auth_token');
@@ -356,8 +424,8 @@
       window.location.href = 'login.html';
     });
 
-    // Initial render
-    renderTable();
+    // Initial load: live tenants when the API answers, labelled demo set otherwise
+    loadTenants();
   </script>
 </body>
 </html>
