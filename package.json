@@ -9,6 +9,10 @@
     "test:cloud": "node tests/test_cloud_frontend_whitebox.js",
     "test:auth": "node tests/test_auth_behavior.js",
     "test:site": "node tests/test_site_whitebox.js",
+    "mock": "node tests/mock_core_api.js",
     "serve": "python -m http.server 8080"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.1"
   }
 }
