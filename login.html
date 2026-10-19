@@ -58,7 +58,7 @@
         <p class="text-xs text-slate-400 mt-2">Access Master Admin Dashboard or Workshop Owner Portal</p>
       </div>
 
-      <!-- Quick Role Switcher for Testing/Demo -->
+      <!-- Role switcher: picks destination role only, never fills credentials -->
       <div class="mb-6 p-2 rounded-xl bg-surface border border-white/[0.06] flex gap-1 text-xs">
         <button id="btnRoleOwner" type="button" class="flex-1 py-1.5 rounded-lg font-medium transition-all bg-white/[0.08] text-white">
           Workshop Owner
@@ -143,25 +143,27 @@
 
     let currentRole = 'OWNER';
 
+    // Demo mode is opt-in only (?demo=1). Never grants SUPERADMIN from an email substring.
+    const DEMO_MODE = new URLSearchParams(window.location.search).has('demo');
+
     btnOwner.addEventListener('click', () => {
       currentRole = 'OWNER';
       btnOwner.className = 'flex-1 py-1.5 rounded-lg font-medium transition-all bg-white/[0.08] text-white';
       btnAdmin.className = 'flex-1 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white';
-      emailInput.value = 'dimas@bengkeljaya.com';
-      passwordInput.value = 'BengkelJaya2026!';
     });
 
     btnAdmin.addEventListener('click', () => {
       currentRole = 'SUPERADMIN';
       btnAdmin.className = 'flex-1 py-1.5 rounded-lg font-medium transition-all bg-white/[0.08] text-white';
       btnOwner.className = 'flex-1 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white';
-      emailInput.value = 'admin@bengkelstack.com';
-      passwordInput.value = 'SuperSecretAdminPass123!';
     });
 
-    // Default pre-fill for demo UX
-    emailInput.value = 'dimas@bengkeljaya.com';
-    passwordInput.value = 'BengkelJaya2026!';
+    function showAlert(msg) {
+      alertMsg.textContent = msg;
+      alertBox.classList.remove('hidden');
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = 'Sign In to Dashboard';
+    }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -172,64 +174,57 @@
       const email = emailInput.value.trim();
       const password = passwordInput.value;
 
+      // Same-origin API only. Cross-origin localhost is blocked by CSP connect-src,
+      // so the auth path must never depend on it.
+      const apiUrl = '/api/v1/auth/login';
+
+      let res;
       try {
-        // Try local backend API if available
-        const apiUrl = window.location.port === '8089' ? '/api/v1/auth/login' : 'http://127.0.0.1:8089/api/v1/auth/login';
-        
-        let res;
-        try {
-          res = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-          });
-        } catch (netErr) {
-          // If standalone static page on CDN, simulate valid authentication session for review
-          res = null;
-        }
-
-        if (res && res.ok) {
-          const json = await res.json();
-          localStorage.setItem('bk_auth_token', json.data.tokens.access_token);
-          localStorage.setItem('bk_user_data', JSON.stringify(json.data.user));
-          if (json.data.tenant) {
-            localStorage.setItem('bk_tenant_data', JSON.stringify(json.data.tenant));
-          }
-          if (json.data.user.role === 'SUPERADMIN') {
-            window.location.href = 'admin.html';
-          } else {
-            window.location.href = 'owner.html';
-          }
-          return;
-        }
-
-        if (res && !res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || 'Authentication failed');
-        }
-
-        // Mock simulation fallback for offline CDN viewing
-        const mockToken = 'bk_at_mock_' + Math.random().toString(36).substring(2);
-        localStorage.setItem('bk_auth_token', mockToken);
-        if (email.includes('admin')) {
+        res = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, requested_role: currentRole })
+        });
+      } catch (netErr) {
+        if (DEMO_MODE) {
+          const mockToken = 'bk_at_mock_' + Math.random().toString(36).substring(2);
+          localStorage.setItem('bk_auth_token', mockToken);
           localStorage.setItem('bk_user_data', JSON.stringify({
-            id: 1, email: email, role: 'SUPERADMIN', full_name: 'Master System Admin'
-          }));
-          window.location.href = 'admin.html';
-        } else {
-          localStorage.setItem('bk_user_data', JSON.stringify({
-            id: 2, email: email, role: 'OWNER', full_name: 'Dimas Prasetyo'
+            id: currentRole === 'SUPERADMIN' ? 1 : 2,
+            email: email,
+            role: currentRole,
+            full_name: currentRole === 'SUPERADMIN' ? 'Master System Admin' : 'Demo Owner'
           }));
           localStorage.setItem('bk_tenant_data', JSON.stringify({
             id: 101, name: 'Jaya Abadi Motor', slug: 'jaya-abadi', plan: 'PRO', status: 'ACTIVE'
           }));
-          window.location.href = 'owner.html';
+          window.location.href = currentRole === 'SUPERADMIN' ? 'admin.html' : 'owner.html';
+          return;
         }
+        showAlert('Auth API unreachable at /api/v1/auth/login — start the core engine on port 8089.');
+        return;
+      }
 
-      } catch (err) {
-        // Safe DOM updates without innerHTML
-        btnSubmit.disabled = false;
-        btnSubmit.textContent = 'Sign In to Dashboard';
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        showAlert(errData.error || 'Authentication failed');
+        return;
+      }
+
+      try {
+        const json = await res.json();
+        if (json.data.user.role === 'SUPERADMIN' && currentRole !== 'SUPERADMIN') {
+          showAlert('Role mismatch: choose SuperAdmin HQ to continue.');
+          return;
+        }
+        localStorage.setItem('bk_auth_token', json.data.tokens.access_token);
+        localStorage.setItem('bk_user_data', JSON.stringify(json.data.user));
+        if (json.data.tenant) {
+          localStorage.setItem('bk_tenant_data', JSON.stringify(json.data.tenant));
+        }
+        window.location.href = json.data.user.role === 'SUPERADMIN' ? 'admin.html' : 'owner.html';
+      } catch (parseErr) {
+        showAlert('Malformed auth response.');
       }
     });
   </script>

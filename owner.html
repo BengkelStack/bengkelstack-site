@@ -206,6 +206,14 @@
   </footer>
 
   <script>
+    // Page guard: no session token -> no dashboard. Mock tokens only accepted in ?demo=1.
+    (() => {
+      const token = localStorage.getItem('bk_auth_token');
+      const isMock = !token || token.startsWith('bk_at_mock_');
+      const demo = new URLSearchParams(location.search).has('demo');
+      if (isMock && !demo) location.replace('login.html');
+    })();
+
     // Load local stored user/tenant data if available
     try {
       const user = JSON.parse(localStorage.getItem('bk_user_data') || '{}');
@@ -233,18 +241,21 @@
       }, 2000);
     });
 
-    // Regenerate Key handler
+    // Regenerate Key handler — CSPRNG only (Math.random is not cryptographic)
     document.getElementById('btnRegenKey').addEventListener('click', () => {
-      const randomPrefix = Math.random().toString(16).substring(2, 10);
-      const randomEntropy = Math.random().toString(36).substring(2, 18) + Math.random().toString(36).substring(2, 18);
-      inputKey.value = `bk_sync_${randomPrefix}_${randomEntropy}`;
+      const rand = (n) => Array.from(crypto.getRandomValues(new Uint8Array(n)));
+      const hex = (n) => rand(n).map(b => b.toString(16).padStart(2, '0')).join('');
+      const b36 = (n) => rand(n).map(b => (b % 36).toString(36)).join('');
+      inputKey.value = `bk_sync_${hex(4)}_${b36(16)}`;
     });
 
-    // Download Config handler
+    // Download Config handler — tenant identity comes from the live session, never hardcode
     document.getElementById('btnDownloadConfig').addEventListener('click', () => {
+      let tenant = {};
+      try { tenant = JSON.parse(localStorage.getItem('bk_tenant_data') || '{}'); } catch (e) {}
       const config = {
-        tenant_id: 101,
-        tenant_slug: 'jaya-abadi',
+        tenant_id: tenant.id ?? null,
+        tenant_slug: tenant.slug ?? null,
         api_key: inputKey.value,
         cloud_sync_url: 'https://api.bengkelstack.com/v1/sync/push',
         sync_interval_seconds: 15,

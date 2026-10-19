@@ -17,14 +17,22 @@ Public landing gateway, interactive invoice OCR simulator, and technical specifi
 
 ## Quickstart
 
-Run a local preview server:
-
 ```bash
-# Python built-in static server
+# Run the verification suite (23 checks, real-source assertions)
+npm test
+
+# Local preview server
 python -m http.server 8080
 ```
 
 Open `http://localhost:8080` in any web browser.
+
+### Auth pages offline
+
+`login.html` and `register.html` call the same-origin `/api/v1/auth/*` endpoints of
+`bengkelstack-core`. Without the core engine they stay honest and show an error.
+Append `?demo=1` to opt into the offline mock session (`bk_at_mock_*` token);
+`admin.html` and `owner.html` refuse mock tokens unless that flag is present.
 
 ---
 

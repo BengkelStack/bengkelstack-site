@@ -29,6 +29,8 @@ const sandbox = {
   document: {
     getElementById: (id) => mockElement(id)
   },
+  // index.html configures Tailwind via CDN; stub it so the VM can run headless.
+  tailwind: {},
   console: console,
   setTimeout: setTimeout,
   Date: Date,

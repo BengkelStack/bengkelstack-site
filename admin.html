@@ -197,6 +197,14 @@
   </div>
 
   <script>
+    // Page guard: no session token -> no dashboard. Mock tokens only accepted in ?demo=1.
+    (() => {
+      const token = localStorage.getItem('bk_auth_token');
+      const isMock = !token || token.startsWith('bk_at_mock_');
+      const demo = new URLSearchParams(location.search).has('demo');
+      if (isMock && !demo) location.replace('login.html');
+    })();
+
     // State
     let tenants = [
       { id: 1, slug: 'jaya-abadi', name: 'Jaya Abadi Motor', country: 'ID 🇮🇩', plan: 'PRO', sync: '12s ago', status: 'ACTIVE' },

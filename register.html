@@ -184,8 +184,10 @@
         plan: plan
       };
 
+      const DEMO_MODE = new URLSearchParams(window.location.search).has('demo');
+
       try {
-        const apiUrl = window.location.port === '8089' ? '/api/v1/auth/register' : 'http://127.0.0.1:8089/api/v1/auth/register';
+        const apiUrl = '/api/v1/auth/register';
         let res;
         try {
           res = await fetch(apiUrl, {
@@ -211,7 +213,11 @@
           throw new Error(errData.error || 'Registration failed');
         }
 
-        // Mock simulation fallback for standalone review
+        // Offline only when demo mode is explicitly enabled (?demo=1)
+        if (!DEMO_MODE) {
+          throw new Error('Registration API unreachable at /api/v1/auth/register — start the core engine on port 8089.');
+        }
+
         const mockToken = 'bk_at_mock_' + Math.random().toString(36).substring(2);
         localStorage.setItem('bk_auth_token', mockToken);
         localStorage.setItem('bk_user_data', JSON.stringify({

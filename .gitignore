@@ -1,0 +1,16 @@
+# AI / terminal debris
+*.stackdump
+*.log
+*.backup_*
+dump.rdb
+*_preview.png
+
+# Dependencies & tooling
+node_modules/
+.next/
+.DS_Store
+
+# Local secrets
+.env
+.env.*
+*.local.json
